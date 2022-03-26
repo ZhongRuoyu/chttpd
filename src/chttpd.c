@@ -371,6 +371,10 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
         }
         // TODO: read and process request headers
     }
+    if (strnlen(host, sizeof host) == 0) {
+        error_response(connection, RESPONSE_BAD_REQUEST);
+        return 1;
+    }
 
     size_t p_request_method = 0;
     while (p_request_method < sizeof REQUEST_METHODS / sizeof(const char *)) {
