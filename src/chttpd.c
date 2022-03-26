@@ -29,7 +29,7 @@
 
 #define INDEX "index.html"
 
-#define REQUEST_HEADER_HOST "Host: "
+#define REQUEST_HEADER_HOST "Host:"
 
 #define RESPONSE_OK "200 OK"
 #define RESPONSE_BAD_REQUEST "400 Bad Request"
@@ -116,6 +116,25 @@ size_t str_copy(char *dest, const char *src, size_t len) {
     while (src[bytes_copied] != '\0' && bytes_copied + 1 < len) {
         dest[bytes_copied] = src[bytes_copied];
         ++bytes_copied;
+    }
+    dest[bytes_copied] = '\0';
+    return bytes_copied;
+}
+
+size_t str_trim(char *dest, const char *src, size_t len) {
+    if (len == 0) {
+        return 0;
+    }
+    size_t bytes_read = 0;
+    size_t bytes_copied = 0;
+    size_t last_non_space = -1;
+    while (src[bytes_read] != '\0' && bytes_copied + 1 < len) {
+        if (!isspace(src[bytes_read])) {
+            dest[bytes_copied] = src[bytes_read];
+            last_non_space = bytes_copied;
+            ++bytes_copied;
+        }
+        ++bytes_read;
     }
     dest[bytes_copied] = '\0';
     return bytes_copied;
@@ -392,7 +411,7 @@ int serve_request(const char *host, const char *port, const char *root,
                 error_response(connection, RESPONSE_BAD_REQUEST);
                 return 1;
             }
-            str_copy(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
+            str_trim(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
                      sizeof uri_host);
             char *port_seperator = strchr(uri_host, ':');
             if (port_seperator != NULL) {
