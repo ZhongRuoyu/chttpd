@@ -446,20 +446,19 @@ int serve_file(int connection, const char *path) {
 
     const char *file_extension = strrchr(path, '.');
     if (file_extension != NULL) {
-        // TODO: identify content types
-        const char *content_type;
+        const char *content_type = NULL;
         if (strcasecmp(file_extension, ".css") == 0) {
             content_type = "text/css";
         } else if (strcasecmp(file_extension, ".html") == 0) {
             content_type = "text/html";
         } else if (strcasecmp(file_extension, ".js") == 0) {
             content_type = "text/javascript";
-        } else {
-            content_type = "text/plain";
         }
-        snprintf(buffer, sizeof buffer, "%s%s\r\n",
-                 RESPONSE_HEADER_CONTENT_TYPE, content_type);
-        send(connection, buffer, strlen(buffer), 0);
+        if (content_type != NULL) {
+            snprintf(buffer, sizeof buffer, "%s%s\r\n",
+                     RESPONSE_HEADER_CONTENT_TYPE, content_type);
+            send(connection, buffer, strlen(buffer), 0);
+        }
     }
 
     snprintf(buffer, sizeof buffer, "\r\n");
