@@ -385,8 +385,7 @@ int serve_request(const char *host, const char *port, const char *root,
     size_t bytes_read = 0;
     char uri_host[LINE_BUFFER_SIZE] = "";
     char uri_port[TOKEN_BUFFER_SIZE] = "";
-    while (strnlen(buffer, sizeof buffer) > 0) {
-        bytes_read = get_line(connection, buffer, sizeof buffer);
+    while ((bytes_read = get_line(connection, buffer, sizeof buffer)) > 0) {
         if (strncasecmp(REQUEST_HEADER_HOST, buffer,
                         strlen(REQUEST_HEADER_HOST)) == 0) {
             if (strnlen(uri_host, sizeof uri_host) > 0) {
