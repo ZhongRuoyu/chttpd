@@ -171,7 +171,8 @@ void get_common_header(char *buffer, size_t buffer_size) {
 }
 
 int initialize(const char *port);
-int serve_request(const char *root, int connection, const char *from_addr_ip,
+int serve_request(const char *host, const char *port, const char *root,
+                  int connection, const char *from_addr_ip,
                   in_port_t from_addr_port);
 int serve_file(int connection, const char *path);
 void send_file(int connection, FILE *file);
@@ -179,12 +180,13 @@ void success_response(int connection, const char *status);
 void error_response(int connection, const char *status);
 
 int main(int argc, char **argv) {
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <port> <path-to-root>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <host> <port> <path-to-root>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    const char *port = argv[1];
-    const char *root = argv[2];
+    const char *host = argv[1];
+    const char *port = argv[2];
+    const char *root = argv[3];
     int s = initialize(port);
     printf("Listening at port %s...\n", port);
 
@@ -213,7 +215,8 @@ int main(int argc, char **argv) {
         }
         if (child_pid == 0) {
             close(s);
-            serve_request(root, connection, from_addr_ip, from_addr_port);
+            serve_request(host, port, root, connection, from_addr_ip,
+                          from_addr_port);
             close(connection);
             exit(EXIT_SUCCESS);
         } else {
@@ -291,7 +294,8 @@ int initialize(const char *port) {
     return s;
 }
 
-int serve_request(const char *root, int connection, const char *from_addr_ip,
+int serve_request(const char *host, const char *port, const char *root,
+                  int connection, const char *from_addr_ip,
                   in_port_t from_addr_port) {
     char log_time[LINE_BUFFER_SIZE];
     get_log_date(log_time, sizeof log_time);
@@ -366,25 +370,38 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
 
     char buffer[BUFFER_SIZE];
     size_t bytes_read = 0;
-    char host[LINE_BUFFER_SIZE] = "";
+    char uri_host[LINE_BUFFER_SIZE] = "";
+    char uri_port[TOKEN_BUFFER_SIZE] = "";
     while (strnlen(buffer, sizeof buffer) > 0) {
         bytes_read = get_line(connection, buffer, sizeof buffer);
         if (strncasecmp(REQUEST_HEADER_HOST, buffer,
                         strlen(REQUEST_HEADER_HOST)) == 0) {
-            if (strnlen(host, sizeof host) > 0) {
+            if (strnlen(uri_host, sizeof uri_host) > 0) {
                 error_response(connection, RESPONSE_BAD_REQUEST);
                 return 1;
             }
-            strncpy(host, buffer + strlen(REQUEST_HEADER_HOST), sizeof host);
-            // TODO: process port number
+            strncpy(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
+                    sizeof uri_host);
+            char *port_seperator = strchr(uri_host, ':');
+            if (port_seperator != NULL) {
+                *port_seperator = '\0';
+                strncpy(uri_port, port_seperator + 1, sizeof uri_port);
+            }
         }
         // TODO: read and process request headers
     }
-    if ((http_version_major > 1 ||
-         http_version_major == 1 && http_version_minor >= 1) &&
-        strnlen(host, sizeof host) == 0) {
-        error_response(connection, RESPONSE_BAD_REQUEST);
-        return 1;
+    if (http_version_major > 1 ||
+        http_version_major == 1 && http_version_minor >= 1) {
+        if (strnlen(uri_host, sizeof uri_host) == 0) {
+            error_response(connection, RESPONSE_BAD_REQUEST);
+            return 1;
+        } else {
+            if (strncmp(uri_host, host, sizeof uri_host) != 0 ||
+                strnlen(uri_port, sizeof uri_port) > 0 &&
+                    strncmp(uri_port, port, sizeof uri_port) != 0) {
+                return 1;
+            }
+        }
     }
 
     size_t p_request_method = 0;
