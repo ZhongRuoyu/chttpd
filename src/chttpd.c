@@ -359,10 +359,14 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
     char buffer[BUFFER_SIZE];
     size_t bytes_read = 0;
     char host[LINE_BUFFER_SIZE] = "";
-    while (strlen(buffer) > 0) {
+    while (strnlen(buffer, sizeof buffer) > 0) {
         bytes_read = get_line(connection, buffer, sizeof buffer);
         if (strncasecmp(REQUEST_HEADER_HOST, buffer,
                         strlen(REQUEST_HEADER_HOST)) == 0) {
+            if (strnlen(host, sizeof host) > 0) {
+                error_response(connection, RESPONSE_BAD_REQUEST);
+                return 1;
+            }
             strncpy(host, buffer + strlen(REQUEST_HEADER_HOST), sizeof host);
         }
         // TODO: read and process request headers
