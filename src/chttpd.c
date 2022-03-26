@@ -127,17 +127,16 @@ void get_log_date(char *buffer, size_t buffer_size) {
              tm.tm_min, tm.tm_sec);
 }
 
-bool http_version_is_compatible(const char *http_version) {
+int get_http_version(const char *http_version, int *http_version_major,
+                     int *http_version_minor) {
     if (strlen(http_version) != 8 || strncmp(http_version, "HTTP", 4) != 0 ||
         http_version[4] != '/' || !isdigit(http_version[5]) ||
         http_version[6] != '.' || !isdigit(http_version[7])) {
-        return false;
+        return 1;
     }
-    int http_version_major = http_version[5] - '0';
-    int http_version_minor = http_version[7] - '0';
-    return HTTP_VERSION_MAJOR > http_version_major ||
-           (HTTP_VERSION_MAJOR == http_version_major &&
-            HTTP_VERSION_MINOR >= http_version_minor);
+    *http_version_major = http_version[5] - '0';
+    *http_version_minor = http_version[7] - '0';
+    return 0;
 }
 
 int get_date_header(char *buffer, size_t buffer_size) {
@@ -351,7 +350,16 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
         }
     }
 
-    if (!http_version_is_compatible(http_version)) {
+    int http_version_major;
+    int http_version_minor;
+    if (get_http_version(http_version, &http_version_major,
+                         &http_version_minor) != 0) {
+        error_response(connection, RESPONSE_BAD_REQUEST);
+        return 1;
+    }
+    if (HTTP_VERSION_MAJOR < http_version_major ||
+        (HTTP_VERSION_MAJOR == http_version_major &&
+         HTTP_VERSION_MINOR < http_version_minor)) {
         error_response(connection, RESPONSE_HTTP_VERSION_NOT_SUPPORTED);
         return 1;
     }
@@ -372,7 +380,9 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
         }
         // TODO: read and process request headers
     }
-    if (strnlen(host, sizeof host) == 0) {
+    if ((http_version_major > 1 ||
+         http_version_major == 1 && http_version_minor >= 1) &&
+        strnlen(host, sizeof host) == 0) {
         error_response(connection, RESPONSE_BAD_REQUEST);
         return 1;
     }
