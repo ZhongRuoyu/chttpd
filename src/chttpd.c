@@ -368,6 +368,7 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
                 return 1;
             }
             strncpy(host, buffer + strlen(REQUEST_HEADER_HOST), sizeof host);
+            // TODO: process port number
         }
         // TODO: read and process request headers
     }
