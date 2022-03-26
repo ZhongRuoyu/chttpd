@@ -181,7 +181,7 @@ void error_response(int connection, const char *status);
 
 int main(int argc, char **argv) {
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s <host> <port> <path-to-root>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <host> <port> <path-to-root>\n", SERVER);
         exit(EXIT_FAILURE);
     }
     const char *host = argv[1];
