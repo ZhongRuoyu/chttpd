@@ -111,9 +111,6 @@ size_t get_line(int connection, char *buffer, size_t buffer_size) {
 size_t get_next_token(const char *str, char *buffer, size_t buffer_size) {
     size_t p = 0;
     size_t token_length = 0;
-    while (str[p] != '\0' && isspace(str[p])) {
-        ++p;
-    }
     while (token_length + 1 < buffer_size && str[p] != '\0' &&
            !isspace(str[p])) {
         buffer[token_length++] = str[p++];
@@ -310,9 +307,6 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
     {
         size_t p_request_line = 0;
 
-        while (isspace(request_line[p_request_line])) {
-            ++p_request_line;
-        }
         size_t method_length = get_next_token(request_line + p_request_line,
                                               method, sizeof method);
         p_request_line += method_length;
@@ -321,9 +315,13 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
             return 1;
         }
 
-        while (isspace(request_line[p_request_line])) {
+        if (isspace(request_line[p_request_line])) {
             ++p_request_line;
+        } else {
+            error_response(connection, RESPONSE_BAD_REQUEST);
+            return 1;
         }
+
         size_t uri_length =
             get_next_token(request_line + p_request_line, uri, sizeof uri);
         p_request_line += uri_length;
@@ -332,9 +330,13 @@ int serve_request(const char *root, int connection, const char *from_addr_ip,
             return 1;
         }
 
-        while (isspace(request_line[p_request_line])) {
+        if (isspace(request_line[p_request_line])) {
             ++p_request_line;
+        } else {
+            error_response(connection, RESPONSE_BAD_REQUEST);
+            return 1;
         }
+
         size_t http_version_length = get_next_token(
             request_line + p_request_line, http_version, sizeof http_version);
         p_request_line += http_version_length;
