@@ -205,7 +205,7 @@ int serve_request(const char *host, const char *port, const char *root,
                   int connection, const char *from_addr_ip,
                   in_port_t from_addr_port);
 int serve_file(int connection, const char *path);
-void send_file(int connection, FILE *file);
+int send_file(int connection, FILE *file);
 void success_response(int connection, const char *status);
 void error_response(int connection, const char *status);
 
@@ -531,20 +531,23 @@ int serve_file(int connection, const char *path) {
     snprintf(buffer, sizeof buffer, "\r\n");
     send(connection, buffer, strlen(buffer), 0);
 
-    send_file(connection, file);
-
-    return 0;
+    return send_file(connection, file);
 }
 
-void send_file(int connection, FILE *file) {
+int send_file(int connection, FILE *file) {
     char buffer[BUFFER_SIZE];
     for (;;) {
         size_t bytes_read = fread(buffer, sizeof(char), sizeof buffer, file);
         if (bytes_read == 0) {
             break;
         }
-        send(connection, buffer, bytes_read, 0);
+        ssize_t bytes_sent = send(connection, buffer, bytes_read, 0);
+        if (bytes_sent == -1) {
+            perror("failed to send response");
+            return 1;
+        }
     }
+    return 0;
 }
 
 void success_response(int connection, const char *status) {
