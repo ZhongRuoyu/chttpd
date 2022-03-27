@@ -89,11 +89,11 @@ size_t get_line(int connection, char *buffer, size_t buffer_size) {
     char ch = '\0';
     size_t bytes_read = 0;
     while (bytes_read + 1 < buffer_size && ch != '\n') {
-        int n = recv(connection, &ch, 1, 0);
+        ssize_t n = recv(connection, &ch, 1, 0);
         if (n > 0) {
             if (ch == '\r') {
                 char next_ch = '\0';
-                int next = recv(connection, &next_ch, 1, MSG_PEEK);
+                ssize_t next = recv(connection, &next_ch, 1, MSG_PEEK);
                 if (next > 0 && next_ch == '\n') {
                     n = recv(connection, &ch, 1, 0);
                 }
