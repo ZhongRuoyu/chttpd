@@ -86,22 +86,20 @@ size_t get_line(int connection, char *buffer, size_t buffer_size) {
     if (buffer_size == 0) {
         return 0;
     }
-    char ch = '\0';
+    char ch;
     size_t bytes_read = 0;
-    while (bytes_read + 1 < buffer_size && ch != '\n') {
+    for (char ch; bytes_read + 1 < buffer_size; buffer[bytes_read++] = ch) {
         ssize_t n = recv(connection, &ch, 1, 0);
-        if (n > 0) {
-            if (ch == '\r') {
-                char next_ch = '\0';
-                ssize_t next = recv(connection, &next_ch, 1, MSG_PEEK);
-                if (next > 0 && next_ch == '\n') {
-                    n = recv(connection, &ch, 1, 0);
-                }
-            } else {
-                buffer[bytes_read++] = ch;
-            }
-        } else {
+        if (n <= 0) {
             break;
+        }
+        if (ch == '\r') {
+            char next_ch;
+            ssize_t next = recv(connection, &next_ch, 1, MSG_PEEK);
+            if (next > 0 && next_ch == '\n') {
+                n = recv(connection, &ch, 1, 0);
+                break;
+            }
         }
     }
     buffer[bytes_read] = '\0';
