@@ -1,19 +1,24 @@
-CFLAGS	= -std=c11
+SRCDIR = src
+OUTDIR = out
+BINDIR = bin
 
-SRC	= src/chttpd.c
-BIN	= chttpd
+SRCS = $(wildcard $(SRCDIR)/*.c)
+OBJS = $(SRCS:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
 
-DEBUG ?= 0
-ifeq ($(DEBUG), 0)
-    CFLAGS += -O2
-else
-    CFLAGS += -O0
-endif
+CFLAGS = -std=c11 -O2
 
-all: $(BIN)
+all: chttpd
 
-$(BIN): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $(SRC)
+chttpd: $(BINDIR)/chttpd
+$(BINDIR)/chttpd: $(OBJS)
+	mkdir -p $(@D)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+$(OUTDIR)/%.o: $(SRCDIR)/%.c
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c -o $@ $^
 
 clean:
-	$(RM) $(BIN)
+	rm -rf $(BINDIR) $(OUTDIR)
+
+.PHONY: clean
