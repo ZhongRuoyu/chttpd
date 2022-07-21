@@ -1,24 +1,27 @@
-SRCDIR = src
-OUTDIR = out
-BINDIR = bin
+CFLAGS = -O2
+LDFLAGS =
 
-SRCS = $(wildcard $(SRCDIR)/*.c)
-OBJS = $(SRCS:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
+SRCS = $(shell find src -name *.c | sort)
+OBJS = $(SRCS:src/%.c=out/%.o)
+DEPS = $(SRCS:src/%.c=out/%.d)
 
-CFLAGS = -std=c11 -O2
+CHTTPD_CFLAGS = -std=c11
+CHTTPD_LDFLAGS =
+CHTTPD_DEPFLAGS = -MT $@ -MMD -MP -MF out/$*.d
 
+.PHONY: all
 all: chttpd
 
-chttpd: $(BINDIR)/chttpd
-$(BINDIR)/chttpd: $(OBJS)
-	mkdir -p $(@D)
-	$(CC) $(LDFLAGS) -o $@ $^
+-include $(DEPS)
 
-$(OUTDIR)/%.o: $(SRCDIR)/%.c
+chttpd: $(OBJS)
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS)
 
-clean:
-	rm -rf $(BINDIR) $(OUTDIR)
+out/%.o: src/%.c
+	mkdir -p $(@D)
+	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
+clean:
+	rm -rf bin out chttpd
