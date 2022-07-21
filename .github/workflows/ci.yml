@@ -16,7 +16,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential clang
       - name: Build
-        run: make -j$(nproc) CC=clang CXX=clang++
+        run: make -j$(nproc) CC=clang
   build-gcc:
     runs-on: ubuntu-latest
     steps:
@@ -27,4 +27,4 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
       - name: Build
-        run: make -j$(nproc) CC=gcc CXX=g++
+        run: make -j$(nproc) CC=gcc
