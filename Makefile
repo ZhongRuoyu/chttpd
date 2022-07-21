@@ -5,7 +5,7 @@ SRCS = $(shell find src -name *.c | sort)
 OBJS = $(SRCS:src/%.c=out/%.o)
 DEPS = $(SRCS:src/%.c=out/%.d)
 
-CHTTPD_CFLAGS = -std=c11
+CHTTPD_CFLAGS = -std=c11 -D_XOPEN_SOURCE=700
 CHTTPD_LDFLAGS =
 CHTTPD_DEPFLAGS = -MT $@ -MMD -MP -MF out/$*.d
 
