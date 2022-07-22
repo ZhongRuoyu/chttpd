@@ -24,4 +24,4 @@ out/%.o: src/%.c
 
 .PHONY: clean
 clean:
-	rm -rf bin out chttpd
+	rm -rf out chttpd
