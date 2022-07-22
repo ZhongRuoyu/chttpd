@@ -11,8 +11,6 @@
 #define LINE_BUFFER_SIZE 1024
 #define URI_BUFFER_SIZE 2048
 
-#define SERVER "chttpd"
-
 #define INDEX "index.html"
 
 #define HTTP_VERSION "HTTP/1.1"

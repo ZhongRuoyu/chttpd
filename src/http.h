@@ -102,10 +102,4 @@ const char *GetResponseStatus(ResponseStatusCode code);
 int GetHTTPVersion(const char *http_version, int *http_version_major,
                    int *http_version_minor);
 
-#define REQUEST_HEADER_HOST "Host:"
-
-#define RESPONSE_HEADER_SERVER "Server: "
-#define RESPONSE_HEADER_CONTENT_LENGTH "Content-Length: "
-#define RESPONSE_HEADER_CONTENT_TYPE "Content-Type: "
-
 #endif  // CHTTPD_HTTP_H_

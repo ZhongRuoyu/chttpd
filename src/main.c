@@ -98,7 +98,7 @@ static int Initialize(const char *port) {
 
 int main(int argc, char **argv) {
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s <host> <port> <path-to-root>\n", SERVER);
+        fprintf(stderr, "Usage: httpd <host> <port> <path-to-root>\n");
         exit(EXIT_FAILURE);
     }
     const char *host = argv[1];

@@ -100,14 +100,12 @@ int ServeRequest(const char *host, const char *port, const char *root,
     char uri_port[TOKEN_BUFFER_SIZE] = "";
     while ((bytes_read =
                 GetLineFromConnection(connection, buffer, sizeof buffer)) > 0) {
-        if (strncasecmp(REQUEST_HEADER_HOST, buffer,
-                        strlen(REQUEST_HEADER_HOST)) == 0) {
+        if (strncasecmp("Host:", buffer, strlen("Host:")) == 0) {
             if (strnlen(uri_host, sizeof uri_host) > 0) {
                 ErrorResponse(connection, kBadRequest);
                 return 1;
             }
-            TrimString(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
-                       sizeof uri_host);
+            TrimString(uri_host, buffer + strlen("Host:"), sizeof uri_host);
             char *port_seperator = strchr(uri_host, ':');
             if (port_seperator != NULL) {
                 *port_seperator = '\0';
@@ -187,8 +185,7 @@ int ServeRequest(const char *host, const char *port, const char *root,
 static size_t GetCommonHeader(char *buffer, size_t buffer_size) {
     size_t n = 0;
     if (n < buffer_size) {
-        n += snprintf(buffer + n, buffer_size - n, "%s%s\r\n",
-                      RESPONSE_HEADER_SERVER, SERVER);
+        n += snprintf(buffer + n, buffer_size - n, "Server: chttpd\r\n");
     }
     if (n < buffer_size) {
         n += GetDateHeader(buffer + n, buffer_size - n);
@@ -209,8 +206,7 @@ static int ServeFile(int connection, const char *path) {
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     rewind(file);
-    snprintf(buffer, sizeof buffer, "%s%ld\r\n", RESPONSE_HEADER_CONTENT_LENGTH,
-             file_size);
+    snprintf(buffer, sizeof buffer, "Content-Length: %ld\r\n", file_size);
     send(connection, buffer, strlen(buffer), 0);
 
     const char *file_extension = strrchr(path, '.');
@@ -224,8 +220,8 @@ static int ServeFile(int connection, const char *path) {
             content_type = "text/javascript";
         }
         if (content_type != NULL) {
-            snprintf(buffer, sizeof buffer, "%s%s\r\n",
-                     RESPONSE_HEADER_CONTENT_TYPE, content_type);
+            snprintf(buffer, sizeof buffer, "Content-Type: %s\r\n",
+                     content_type);
             send(connection, buffer, strlen(buffer), 0);
         }
     }
