@@ -41,30 +41,6 @@ void sigchld_handler(int arg) {
     errno = saved_errno;
 }
 
-size_t get_line(int connection, char *buffer, size_t buffer_size) {
-    if (buffer_size == 0) {
-        return 0;
-    }
-    char ch;
-    size_t bytes_read = 0;
-    for (char ch; bytes_read + 1 < buffer_size; buffer[bytes_read++] = ch) {
-        ssize_t n = recv(connection, &ch, 1, 0);
-        if (n <= 0) {
-            break;
-        }
-        if (ch == '\r') {
-            char next_ch;
-            ssize_t next = recv(connection, &next_ch, 1, MSG_PEEK);
-            if (next > 0 && next_ch == '\n') {
-                n = recv(connection, &ch, 1, 0);
-                break;
-            }
-        }
-    }
-    buffer[bytes_read] = '\0';
-    return bytes_read;
-}
-
 size_t str_copy(char *dest, const char *src, size_t len) {
     if (len == 0) {
         return 0;
@@ -251,7 +227,7 @@ int serve_request(const char *host, const char *port, const char *root,
 
     char request_line[BUFFER_SIZE];
     size_t request_line_length =
-        get_line(connection, request_line, sizeof request_line);
+        GetLineFromConnection(connection, request_line, sizeof request_line);
 
     char method[TOKEN_BUFFER_SIZE];
     char uri[URI_BUFFER_SIZE];
@@ -321,7 +297,8 @@ int serve_request(const char *host, const char *port, const char *root,
     size_t bytes_read = 0;
     char uri_host[LINE_BUFFER_SIZE] = "";
     char uri_port[TOKEN_BUFFER_SIZE] = "";
-    while ((bytes_read = get_line(connection, buffer, sizeof buffer)) > 0) {
+    while ((bytes_read =
+                GetLineFromConnection(connection, buffer, sizeof buffer)) > 0) {
         if (strncasecmp(REQUEST_HEADER_HOST, buffer,
                         strlen(REQUEST_HEADER_HOST)) == 0) {
             if (strnlen(uri_host, sizeof uri_host) > 0) {
