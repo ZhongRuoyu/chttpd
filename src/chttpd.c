@@ -32,7 +32,7 @@ int ServeRequest(const char *host, const char *port, const char *root,
 
     char method[TOKEN_BUFFER_SIZE];
     char uri[URI_BUFFER_SIZE];
-    char http_version[TOKEN_BUFFER_SIZE];
+    char http_version_string[TOKEN_BUFFER_SIZE];
     {
         size_t p_request_line = 0;
 
@@ -66,8 +66,9 @@ int ServeRequest(const char *host, const char *port, const char *root,
             return 1;
         }
 
-        size_t http_version_length = GetNextToken(
-            request_line + p_request_line, http_version, sizeof http_version);
+        size_t http_version_length =
+            GetNextToken(request_line + p_request_line, http_version_string,
+                         sizeof http_version_string);
         p_request_line += http_version_length;
         if (http_version_length == 0) {
             ErrorResponse(connection, kBadRequest);
@@ -80,18 +81,18 @@ int ServeRequest(const char *host, const char *port, const char *root,
         }
     }
 
-    int http_version_major;
-    int http_version_minor;
-    if (GetHTTPVersion(http_version, &http_version_major,
-                       &http_version_minor) != 0) {
+    HTTPVersion http_version = GetHTTPVersion(http_version_string);
+    if (http_version == 0) {
         ErrorResponse(connection, kBadRequest);
         return 1;
     }
-    if (HTTP_VERSION_MAJOR < http_version_major ||
-        (HTTP_VERSION_MAJOR == http_version_major &&
-         HTTP_VERSION_MINOR < http_version_minor)) {
-        ErrorResponse(connection, kHTTPVersionNotSupported);
-        return 1;
+    switch (http_version) {
+        case kHTTP_1_0:
+        case kHTTP_1_1:
+            break;
+        default:
+            ErrorResponse(connection, kHTTPVersionNotSupported);
+            return 1;
     }
 
     char buffer[BUFFER_SIZE];
@@ -114,8 +115,7 @@ int ServeRequest(const char *host, const char *port, const char *root,
         }
         // TODO: read and process request headers
     }
-    if (http_version_major > 1 ||
-        http_version_major == 1 && http_version_minor >= 1) {
+    if (http_version == kHTTP_1_1) {
         if (strnlen(uri_host, sizeof uri_host) == 0) {
             ErrorResponse(connection, kBadRequest);
             return 1;
@@ -239,8 +239,8 @@ static int ServeFile(int connection, const char *path) {
 
 static void SuccessResponse(int connection, ResponseStatusCode code) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof buffer, "%s %s\r\n", HTTP_VERSION,
-             GetResponseStatus(code));
+    snprintf(buffer, sizeof buffer, "%s %s\r\n",
+             GetHTTPVersionString(kHTTP_1_1), GetResponseStatusString(code));
     send(connection, buffer, strlen(buffer), 0);
     GetCommonHeader(buffer, sizeof buffer);
     send(connection, buffer, strlen(buffer), 0);
@@ -248,13 +248,13 @@ static void SuccessResponse(int connection, ResponseStatusCode code) {
 
 static void ErrorResponse(int connection, ResponseStatusCode code) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof buffer, "%s %s\r\n", HTTP_VERSION,
-             GetResponseStatus(code));
+    snprintf(buffer, sizeof buffer, "%s %s\r\n",
+             GetHTTPVersionString(kHTTP_1_1), GetResponseStatusString(code));
     send(connection, buffer, strlen(buffer), 0);
     GetCommonHeader(buffer, sizeof buffer);
     send(connection, buffer, strlen(buffer), 0);
     snprintf(buffer, sizeof buffer, "\r\n");
     send(connection, buffer, strlen(buffer), 0);
-    snprintf(buffer, sizeof buffer, "%s\n", GetResponseStatus(code));
+    snprintf(buffer, sizeof buffer, "%s\n", GetResponseStatusString(code));
     send(connection, buffer, strlen(buffer), 0);
 }

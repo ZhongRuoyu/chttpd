@@ -5,6 +5,18 @@
 #include <string.h>
 
 typedef enum {
+    kHTTP_0_9 = 1,
+    kHTTP_1_0 = 2,
+    kHTTP_1_1 = 3,
+    kHTTP_2 = 4,
+    kHTTP_3 = 5,
+} HTTPVersion;
+
+HTTPVersion GetHTTPVersion(const char *http_version);
+
+const char *GetHTTPVersionString(HTTPVersion http_version);
+
+typedef enum {
     kGET = 1,
     kHEAD = 2,
     kPOST = 3,
@@ -93,8 +105,5 @@ typedef enum {
 } ResponseStatusCode;
 
 const char *GetResponseStatusString(ResponseStatusCode code);
-
-int GetHTTPVersion(const char *http_version, int *http_version_major,
-                   int *http_version_minor);
 
 #endif  // CHTTPD_HTTP_H_

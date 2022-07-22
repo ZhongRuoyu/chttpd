@@ -4,6 +4,27 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const char *kHTTPVersions[] = {
+    "", "HTTP/0.9", "HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3",
+};
+
+HTTPVersion GetHTTPVersion(const char *http_version) {
+    for (size_t i = 0; i < sizeof kHTTPVersions / sizeof(const char *); ++i) {
+        if (strcmp(http_version, kHTTPVersions[i]) == 0) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+const char *GetHTTPVersionString(HTTPVersion http_version) {
+    if (http_version <= 0 ||
+        http_version >= sizeof kHTTPVersions / sizeof(const char *)) {
+        return NULL;
+    }
+    return kHTTPVersions[http_version];
+}
+
 static const char *kRequestMethods[] = {
     "",       "GET",     "HEAD",    "POST",  "PUT",
     "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH",
@@ -152,16 +173,4 @@ const char *GetResponseStatusString(ResponseStatusCode code) {
         default:
             return NULL;
     }
-}
-
-int GetHTTPVersion(const char *http_version, int *http_version_major,
-                   int *http_version_minor) {
-    if (strlen(http_version) != 8 || strncmp(http_version, "HTTP", 4) != 0 ||
-        http_version[4] != '/' || !isdigit(http_version[5]) ||
-        http_version[6] != '.' || !isdigit(http_version[7])) {
-        return 1;
-    }
-    *http_version_major = http_version[5] - '0';
-    *http_version_minor = http_version[7] - '0';
-    return 0;
 }
