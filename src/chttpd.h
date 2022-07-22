@@ -6,10 +6,10 @@
 
 #define BACKLOG SOMAXCONN
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 16384
 #define TOKEN_BUFFER_SIZE 256
 #define LINE_BUFFER_SIZE 1024
-#define URI_BUFFER_SIZE 2048
+#define URI_BUFFER_SIZE 8192
 
 #define INDEX "index.html"
 
