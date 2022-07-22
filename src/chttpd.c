@@ -28,14 +28,14 @@ int ServeRequest(const char *host, const char *port, const char *root,
     size_t request_line_length =
         GetLineFromConnection(connection, request_line, sizeof request_line);
 
-    char method[TOKEN_BUFFER_SIZE];
+    char method_string[TOKEN_BUFFER_SIZE];
     char uri[URI_BUFFER_SIZE];
     char http_version_string[TOKEN_BUFFER_SIZE];
     {
         size_t p_request_line = 0;
 
-        size_t method_length =
-            GetNextToken(request_line + p_request_line, method, sizeof method);
+        size_t method_length = GetNextToken(
+            request_line + p_request_line, method_string, sizeof method_string);
         p_request_line += method_length;
         if (method_length == 0) {
             ErrorResponse(connection, kBadRequest);
@@ -126,7 +126,7 @@ int ServeRequest(const char *host, const char *port, const char *root,
         }
     }
 
-    RequestMethod request_method = GetRequestMethod(method);
+    RequestMethod request_method = GetRequestMethod(method_string);
     if (request_method == 0) {
         ErrorResponse(connection, kBadRequest);
         return 1;
