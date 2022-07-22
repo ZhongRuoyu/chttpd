@@ -12,6 +12,7 @@
 
 #include "datetime.h"
 #include "http.h"
+#include "logging.h"
 #include "socket.h"
 #include "strings.h"
 
@@ -23,9 +24,6 @@ static void ErrorResponse(int connection, ResponseStatusCode code);
 int ServeRequest(const char *host, const char *port, const char *root,
                  int connection, const char *from_addr_ip,
                  in_port_t from_addr_port) {
-    char log_time[kDateHeaderBufferSize];
-    GetLogDate(log_time, sizeof log_time);
-
     char request_line[BUFFER_SIZE];
     size_t request_line_length =
         GetLineFromConnection(connection, request_line, sizeof request_line);
@@ -134,8 +132,7 @@ int ServeRequest(const char *host, const char *port, const char *root,
         return 1;
     }
 
-    printf("[%s [%s]:%d] %s\n", log_time, from_addr_ip, from_addr_port,
-           request_line);
+    LogRequestLine(from_addr_ip, from_addr_port, request_line);
     switch (request_method) {
         case kGET: {
             {
