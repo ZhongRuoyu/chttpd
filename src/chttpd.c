@@ -36,20 +36,6 @@ void sigchld_handler(int arg) {
     errno = saved_errno;
 }
 
-const void *get_in_addr(const struct sockaddr *addr) {
-    if (addr->sa_family == AF_INET) {
-        return &(((const struct sockaddr_in *)addr)->sin_addr);
-    }
-    return &(((const struct sockaddr_in6 *)addr)->sin6_addr);
-}
-
-in_port_t get_in_port(const struct sockaddr *addr) {
-    if (addr->sa_family == AF_INET) {
-        return ntohs(((const struct sockaddr_in *)addr)->sin_port);
-    }
-    return ntohs(((const struct sockaddr_in6 *)addr)->sin6_port);
-}
-
 size_t get_line(int connection, char *buffer, size_t buffer_size) {
     if (buffer_size == 0) {
         return 0;
@@ -172,10 +158,10 @@ int main(int argc, char **argv) {
 
         char from_addr_ip[INET6_ADDRSTRLEN];
         inet_ntop(from_addr.ss_family,
-                  get_in_addr((const struct sockaddr *)&from_addr),
+                  GetInAddr((const struct sockaddr *)&from_addr),
                   from_addr_ip, sizeof from_addr_ip);
         in_port_t from_addr_port =
-            get_in_port((const struct sockaddr *)&from_addr);
+            GetInPort((const struct sockaddr *)&from_addr);
 
         pid_t child_pid = fork();
         if (child_pid == -1) {
