@@ -1,6 +1,9 @@
 #ifndef CHTTPD_HTTP_H_
 #define CHTTPD_HTTP_H_
 
+#include <ctype.h>
+#include <string.h>
+
 typedef enum {
     kGET = 1,
     kHEAD = 2,
@@ -96,9 +99,8 @@ typedef enum {
 
 const char *GetResponseStatus(ResponseStatusCode code);
 
-#define HTTP_VERSION "HTTP/1.1"
-#define HTTP_VERSION_MAJOR 1
-#define HTTP_VERSION_MINOR 1
+int GetHTTPVersion(const char *http_version, int *http_version_major,
+                   int *http_version_minor);
 
 #define REQUEST_HEADER_HOST "Host:"
 

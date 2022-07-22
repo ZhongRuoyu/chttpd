@@ -16,6 +16,7 @@
 
 #include "datetime.h"
 #include "http.h"
+#include "socket.h"
 
 #define BACKLOG SOMAXCONN
 
@@ -27,6 +28,10 @@
 #define SERVER "chttpd"
 
 #define INDEX "index.html"
+
+#define HTTP_VERSION "HTTP/1.1"
+#define HTTP_VERSION_MAJOR 1
+#define HTTP_VERSION_MINOR 1
 
 void sigchld_handler(int arg) {
     int saved_errno = errno;
@@ -103,18 +108,6 @@ size_t next_token(const char *str, char *buffer, size_t buffer_size) {
     return token_length;
 }
 
-int get_http_version(const char *http_version, int *http_version_major,
-                     int *http_version_minor) {
-    if (strlen(http_version) != 8 || strncmp(http_version, "HTTP", 4) != 0 ||
-        http_version[4] != '/' || !isdigit(http_version[5]) ||
-        http_version[6] != '.' || !isdigit(http_version[7])) {
-        return 1;
-    }
-    *http_version_major = http_version[5] - '0';
-    *http_version_minor = http_version[7] - '0';
-    return 0;
-}
-
 void get_common_header(char *buffer, size_t buffer_size) {
     int n = 0;
     if (n < buffer_size) {
@@ -158,8 +151,8 @@ int main(int argc, char **argv) {
 
         char from_addr_ip[INET6_ADDRSTRLEN];
         inet_ntop(from_addr.ss_family,
-                  GetInAddr((const struct sockaddr *)&from_addr),
-                  from_addr_ip, sizeof from_addr_ip);
+                  GetInAddr((const struct sockaddr *)&from_addr), from_addr_ip,
+                  sizeof from_addr_ip);
         in_port_t from_addr_port =
             GetInPort((const struct sockaddr *)&from_addr);
 
@@ -312,8 +305,8 @@ int serve_request(const char *host, const char *port, const char *root,
 
     int http_version_major;
     int http_version_minor;
-    if (get_http_version(http_version, &http_version_major,
-                         &http_version_minor) != 0) {
+    if (GetHTTPVersion(http_version, &http_version_major,
+                       &http_version_minor) != 0) {
         error_response(connection, GetResponseStatus(kBadRequest));
         return 1;
     }

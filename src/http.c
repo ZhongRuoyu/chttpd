@@ -148,3 +148,15 @@ const char *GetResponseStatus(ResponseStatusCode code) {
             return NULL;
     }
 }
+
+int GetHTTPVersion(const char *http_version, int *http_version_major,
+                   int *http_version_minor) {
+    if (strlen(http_version) != 8 || strncmp(http_version, "HTTP", 4) != 0 ||
+        http_version[4] != '/' || !isdigit(http_version[5]) ||
+        http_version[6] != '.' || !isdigit(http_version[7])) {
+        return 1;
+    }
+    *http_version_major = http_version[5] - '0';
+    *http_version_minor = http_version[7] - '0';
+    return 0;
+}
