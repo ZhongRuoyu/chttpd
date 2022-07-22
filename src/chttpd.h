@@ -11,8 +11,6 @@
 #define LINE_BUFFER_SIZE 1024
 #define URI_BUFFER_SIZE 8192
 
-#define INDEX "index.html"
-
 int ServeRequest(const char *host, const char *port, const char *root,
                  int connection, const char *from_addr_ip,
                  in_port_t from_addr_port);

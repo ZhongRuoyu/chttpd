@@ -160,13 +160,13 @@ int ServeRequest(const char *host, const char *port, const char *root,
                     return 1;
                 }
                 if (path[path_length - 1] == '/') {
-                    if (path_length + strlen(INDEX) + 1 > sizeof path) {
+                    if (path_length + strlen("index.html") + 1 > sizeof path) {
                         ErrorResponse(connection, kURITooLong);
                         return 1;
                     }
-                    CopyString(path + path_length, INDEX,
+                    CopyString(path + path_length, "index.html",
                                sizeof path - path_length);
-                    path_length += strlen(INDEX);
+                    path_length += strlen("index.html");
                 }
             }
             return ServeFile(connection, path);
