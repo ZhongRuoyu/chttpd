@@ -17,6 +17,7 @@
 #include "datetime.h"
 #include "http.h"
 #include "socket.h"
+#include "strings.h"
 
 #define BACKLOG SOMAXCONN
 
@@ -39,49 +40,6 @@ void sigchld_handler(int arg) {
         continue;
     }
     errno = saved_errno;
-}
-
-size_t str_copy(char *dest, const char *src, size_t len) {
-    if (len == 0) {
-        return 0;
-    }
-    size_t bytes_copied = 0;
-    while (src[bytes_copied] != '\0' && bytes_copied + 1 < len) {
-        dest[bytes_copied] = src[bytes_copied];
-        ++bytes_copied;
-    }
-    dest[bytes_copied] = '\0';
-    return bytes_copied;
-}
-
-size_t str_trim(char *dest, const char *src, size_t len) {
-    if (len == 0) {
-        return 0;
-    }
-    size_t bytes_read = 0;
-    size_t bytes_copied = 0;
-    size_t last_non_space = -1;
-    while (src[bytes_read] != '\0' && bytes_copied + 1 < len) {
-        if (!isspace(src[bytes_read])) {
-            dest[bytes_copied] = src[bytes_read];
-            last_non_space = bytes_copied;
-            ++bytes_copied;
-        }
-        ++bytes_read;
-    }
-    dest[bytes_copied] = '\0';
-    return bytes_copied;
-}
-
-size_t next_token(const char *str, char *buffer, size_t buffer_size) {
-    size_t p = 0;
-    size_t token_length = 0;
-    while (token_length + 1 < buffer_size && str[p] != '\0' &&
-           !isspace(str[p])) {
-        buffer[token_length++] = str[p++];
-    }
-    buffer[token_length] = '\0';
-    return token_length;
 }
 
 void get_common_header(char *buffer, size_t buffer_size) {
@@ -236,7 +194,7 @@ int serve_request(const char *host, const char *port, const char *root,
         size_t p_request_line = 0;
 
         size_t method_length =
-            next_token(request_line + p_request_line, method, sizeof method);
+            GetNextToken(request_line + p_request_line, method, sizeof method);
         p_request_line += method_length;
         if (method_length == 0) {
             error_response(connection, GetResponseStatus(kBadRequest));
@@ -251,7 +209,7 @@ int serve_request(const char *host, const char *port, const char *root,
         }
 
         size_t uri_length =
-            next_token(request_line + p_request_line, uri, sizeof uri);
+            GetNextToken(request_line + p_request_line, uri, sizeof uri);
         p_request_line += uri_length;
         if (uri_length == 0) {
             error_response(connection, GetResponseStatus(kBadRequest));
@@ -265,7 +223,7 @@ int serve_request(const char *host, const char *port, const char *root,
             return 1;
         }
 
-        size_t http_version_length = next_token(
+        size_t http_version_length = GetNextToken(
             request_line + p_request_line, http_version, sizeof http_version);
         p_request_line += http_version_length;
         if (http_version_length == 0) {
@@ -305,12 +263,12 @@ int serve_request(const char *host, const char *port, const char *root,
                 error_response(connection, GetResponseStatus(kBadRequest));
                 return 1;
             }
-            str_trim(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
-                     sizeof uri_host);
+            TrimString(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
+                       sizeof uri_host);
             char *port_seperator = strchr(uri_host, ':');
             if (port_seperator != NULL) {
                 *port_seperator = '\0';
-                str_copy(uri_port, port_seperator + 1, sizeof uri_port);
+                CopyString(uri_port, port_seperator + 1, sizeof uri_port);
             }
         }
         // TODO: read and process request headers
@@ -353,8 +311,8 @@ int serve_request(const char *host, const char *port, const char *root,
                     error_response(connection, GetResponseStatus(kURITooLong));
                     return 1;
                 }
-                str_copy(path, root, sizeof path);
-                str_copy(path + root_length, uri, sizeof path - root_length);
+                CopyString(path, root, sizeof path);
+                CopyString(path + root_length, uri, sizeof path - root_length);
                 path_length = strnlen(path, sizeof path);
                 if (path_length == sizeof path) {
                     error_response(connection, GetResponseStatus(kURITooLong));
@@ -366,8 +324,8 @@ int serve_request(const char *host, const char *port, const char *root,
                                        GetResponseStatus(kURITooLong));
                         return 1;
                     }
-                    str_copy(path + path_length, INDEX,
-                             sizeof path - path_length);
+                    CopyString(path + path_length, INDEX,
+                               sizeof path - path_length);
                     path_length += strlen(INDEX);
                 }
             }
