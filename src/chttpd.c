@@ -1,185 +1,28 @@
-#include <arpa/inet.h>
+#include "chttpd.h"
+
 #include <ctype.h>
-#include <errno.h>
-#include <netdb.h>
 #include <netinet/in.h>
-#include <signal.h>
-#include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 #include "datetime.h"
 #include "http.h"
 #include "socket.h"
 #include "strings.h"
 
-#define BACKLOG SOMAXCONN
+static size_t GetCommonHeader(char *buffer, size_t buffer_size);
+static int ServeFile(int connection, const char *path);
+static void SuccessResponse(int connection, ResponseStatusCode code);
+static void ErrorResponse(int connection, ResponseStatusCode code);
 
-#define BUFFER_SIZE 4096
-#define TOKEN_BUFFER_SIZE 256
-#define LINE_BUFFER_SIZE 1024
-#define URI_BUFFER_SIZE 2048
-
-#define SERVER "chttpd"
-
-#define INDEX "index.html"
-
-#define HTTP_VERSION "HTTP/1.1"
-#define HTTP_VERSION_MAJOR 1
-#define HTTP_VERSION_MINOR 1
-
-void sigchld_handler(int arg) {
-    int saved_errno = errno;
-    while (waitpid(-1, NULL, WNOHANG) > 0) {
-        continue;
-    }
-    errno = saved_errno;
-}
-
-void get_common_header(char *buffer, size_t buffer_size) {
-    int n = 0;
-    if (n < buffer_size) {
-        n += snprintf(buffer + n, buffer_size - n, "%s%s\r\n",
-                      RESPONSE_HEADER_SERVER, SERVER);
-    }
-    if (n < buffer_size) {
-        n += GetDateHeader(buffer + n, buffer_size - n);
-    }
-}
-
-int initialize(const char *port);
-int serve_request(const char *host, const char *port, const char *root,
-                  int connection, const char *from_addr_ip,
-                  in_port_t from_addr_port);
-int serve_file(int connection, const char *path);
-int send_file(int connection, FILE *file);
-void success_response(int connection, const char *status);
-void error_response(int connection, const char *status);
-
-int main(int argc, char **argv) {
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s <host> <port> <path-to-root>\n", SERVER);
-        exit(EXIT_FAILURE);
-    }
-    const char *host = argv[1];
-    const char *port = argv[2];
-    const char *root = argv[3];
-    int s = initialize(port);
-    printf("Listening at port %s...\n", port);
-
-    for (;;) {
-        struct sockaddr_storage from_addr;
-        socklen_t from_addr_len = sizeof from_addr;
-        int connection =
-            accept(s, (struct sockaddr *)&from_addr, &from_addr_len);
-        if (connection == -1) {
-            perror("failed to accept connection");
-            continue;
-        }
-
-        char from_addr_ip[INET6_ADDRSTRLEN];
-        inet_ntop(from_addr.ss_family,
-                  GetInAddr((const struct sockaddr *)&from_addr), from_addr_ip,
-                  sizeof from_addr_ip);
-        in_port_t from_addr_port =
-            GetInPort((const struct sockaddr *)&from_addr);
-
-        pid_t child_pid = fork();
-        if (child_pid == -1) {
-            perror("failed to create child process");
-            close(connection);
-            continue;
-        }
-        if (child_pid == 0) {
-            close(s);
-            serve_request(host, port, root, connection, from_addr_ip,
-                          from_addr_port);
-            close(connection);
-            exit(EXIT_SUCCESS);
-        } else {
-            close(connection);
-        }
-    }
-
-    close(s);
-
-    return 0;
-}
-
-int initialize(const char *port) {
-    struct addrinfo hints = {.ai_flags = AI_PASSIVE,
-                             .ai_family = AF_UNSPEC,
-                             .ai_socktype = SOCK_STREAM};
-    struct addrinfo *addr_info_head;
-
-    {
-        int gai_status = getaddrinfo(NULL, port, &hints, &addr_info_head);
-        if (gai_status != 0) {
-            fprintf(stderr, "failed to get port info: %s\n",
-                    gai_strerror(gai_status));
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    int s;
-    struct addrinfo *addr_info;
-    for (addr_info = addr_info_head; addr_info != NULL;
-         addr_info = addr_info->ai_next) {
-        s = socket(addr_info->ai_family, addr_info->ai_socktype,
-                   addr_info->ai_protocol);
-        if (s == -1) {
-            continue;
-        }
-        {
-            int yes = 1;
-            if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes) ==
-                -1) {
-                perror("failed to configure socket");
-                freeaddrinfo(addr_info_head);
-                close(s);
-                exit(EXIT_FAILURE);
-            }
-        }
-        if (bind(s, addr_info->ai_addr, addr_info->ai_addrlen) == -1) {
-            close(s);
-            continue;
-        }
-        break;
-    }
-    if (addr_info == NULL) {
-        perror("failed to bind socket");
-        freeaddrinfo(addr_info_head);
-        exit(EXIT_FAILURE);
-    }
-    freeaddrinfo(addr_info_head);
-
-    struct sigaction action = {.sa_handler = sigchld_handler,
-                               .sa_flags = SA_RESTART};
-    sigemptyset(&action.sa_mask);
-    if (sigaction(SIGCHLD, &action, NULL) == -1) {
-        perror("failed to set up signal handler");
-        close(s);
-        exit(EXIT_FAILURE);
-    }
-
-    if (listen(s, BACKLOG) == -1) {
-        perror("failed to listen");
-        close(s);
-        exit(EXIT_FAILURE);
-    }
-
-    return s;
-}
-
-int serve_request(const char *host, const char *port, const char *root,
-                  int connection, const char *from_addr_ip,
-                  in_port_t from_addr_port) {
+int ServeRequest(const char *host, const char *port, const char *root,
+                 int connection, const char *from_addr_ip,
+                 in_port_t from_addr_port) {
     char log_time[kDateHeaderBufferSize];
     GetLogDate(log_time, sizeof log_time);
 
@@ -197,14 +40,14 @@ int serve_request(const char *host, const char *port, const char *root,
             GetNextToken(request_line + p_request_line, method, sizeof method);
         p_request_line += method_length;
         if (method_length == 0) {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         }
 
         if (isspace(request_line[p_request_line])) {
             ++p_request_line;
         } else {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         }
 
@@ -212,14 +55,14 @@ int serve_request(const char *host, const char *port, const char *root,
             GetNextToken(request_line + p_request_line, uri, sizeof uri);
         p_request_line += uri_length;
         if (uri_length == 0) {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         }
 
         if (isspace(request_line[p_request_line])) {
             ++p_request_line;
         } else {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         }
 
@@ -227,12 +70,12 @@ int serve_request(const char *host, const char *port, const char *root,
             request_line + p_request_line, http_version, sizeof http_version);
         p_request_line += http_version_length;
         if (http_version_length == 0) {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         }
 
         if (strlen(request_line + p_request_line) > 0) {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         }
     }
@@ -241,13 +84,13 @@ int serve_request(const char *host, const char *port, const char *root,
     int http_version_minor;
     if (GetHTTPVersion(http_version, &http_version_major,
                        &http_version_minor) != 0) {
-        error_response(connection, GetResponseStatus(kBadRequest));
+        ErrorResponse(connection, kBadRequest);
         return 1;
     }
     if (HTTP_VERSION_MAJOR < http_version_major ||
         (HTTP_VERSION_MAJOR == http_version_major &&
          HTTP_VERSION_MINOR < http_version_minor)) {
-        error_response(connection, GetResponseStatus(kHTTPVersionNotSupported));
+        ErrorResponse(connection, kHTTPVersionNotSupported);
         return 1;
     }
 
@@ -260,7 +103,7 @@ int serve_request(const char *host, const char *port, const char *root,
         if (strncasecmp(REQUEST_HEADER_HOST, buffer,
                         strlen(REQUEST_HEADER_HOST)) == 0) {
             if (strnlen(uri_host, sizeof uri_host) > 0) {
-                error_response(connection, GetResponseStatus(kBadRequest));
+                ErrorResponse(connection, kBadRequest);
                 return 1;
             }
             TrimString(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
@@ -276,7 +119,7 @@ int serve_request(const char *host, const char *port, const char *root,
     if (http_version_major > 1 ||
         http_version_major == 1 && http_version_minor >= 1) {
         if (strnlen(uri_host, sizeof uri_host) == 0) {
-            error_response(connection, GetResponseStatus(kBadRequest));
+            ErrorResponse(connection, kBadRequest);
             return 1;
         } else {
             if (strncmp(uri_host, host, sizeof uri_host) != 0 ||
@@ -289,7 +132,7 @@ int serve_request(const char *host, const char *port, const char *root,
 
     RequestMethod request_method = GetRequestMethod(method);
     if (request_method == 0) {
-        error_response(connection, GetResponseStatus(kBadRequest));
+        ErrorResponse(connection, kBadRequest);
         return 1;
     }
 
@@ -308,20 +151,19 @@ int serve_request(const char *host, const char *port, const char *root,
             {
                 size_t root_length = strlen(root);
                 if (root_length + 1 >= sizeof path) {
-                    error_response(connection, GetResponseStatus(kURITooLong));
+                    ErrorResponse(connection, kURITooLong);
                     return 1;
                 }
                 CopyString(path, root, sizeof path);
                 CopyString(path + root_length, uri, sizeof path - root_length);
                 path_length = strnlen(path, sizeof path);
                 if (path_length == sizeof path) {
-                    error_response(connection, GetResponseStatus(kURITooLong));
+                    ErrorResponse(connection, kURITooLong);
                     return 1;
                 }
                 if (path[path_length - 1] == '/') {
                     if (path_length + strlen(INDEX) + 1 > sizeof path) {
-                        error_response(connection,
-                                       GetResponseStatus(kURITooLong));
+                        ErrorResponse(connection, kURITooLong);
                         return 1;
                     }
                     CopyString(path + path_length, INDEX,
@@ -329,26 +171,38 @@ int serve_request(const char *host, const char *port, const char *root,
                     path_length += strlen(INDEX);
                 }
             }
-            return serve_file(connection, path);
+            return ServeFile(connection, path);
         }
         default: {
             // TODO: other request methods
-            error_response(connection, GetResponseStatus(kNotImplemented));
+            ErrorResponse(connection, kNotImplemented);
             return 1;
         }
     }
 
-    error_response(connection, GetResponseStatus(kNotImplemented));
+    ErrorResponse(connection, kNotImplemented);
     return 1;
 }
 
-int serve_file(int connection, const char *path) {
+static size_t GetCommonHeader(char *buffer, size_t buffer_size) {
+    size_t n = 0;
+    if (n < buffer_size) {
+        n += snprintf(buffer + n, buffer_size - n, "%s%s\r\n",
+                      RESPONSE_HEADER_SERVER, SERVER);
+    }
+    if (n < buffer_size) {
+        n += GetDateHeader(buffer + n, buffer_size - n);
+    }
+    return n;
+}
+
+static int ServeFile(int connection, const char *path) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
-        error_response(connection, GetResponseStatus(kNotFound));
+        ErrorResponse(connection, kNotFound);
         return 1;
     }
-    success_response(connection, GetResponseStatus(kOK));
+    SuccessResponse(connection, kOK);
 
     char buffer[BUFFER_SIZE];
 
@@ -379,41 +233,32 @@ int serve_file(int connection, const char *path) {
     snprintf(buffer, sizeof buffer, "\r\n");
     send(connection, buffer, strlen(buffer), 0);
 
-    return send_file(connection, file);
-}
-
-int send_file(int connection, FILE *file) {
-    char buffer[BUFFER_SIZE];
-    for (;;) {
-        size_t bytes_read = fread(buffer, sizeof(char), sizeof buffer, file);
-        if (bytes_read == 0) {
-            break;
-        }
-        ssize_t bytes_sent = send(connection, buffer, bytes_read, 0);
-        if (bytes_sent == -1) {
-            perror("failed to send response");
-            return 1;
-        }
+    int send_file_error = SendFile(connection, file);
+    if (send_file_error != 0) {
+        perror("failed to send response");
+        return send_file_error;
     }
     return 0;
 }
 
-void success_response(int connection, const char *status) {
+static void SuccessResponse(int connection, ResponseStatusCode code) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof buffer, "%s %s\r\n", HTTP_VERSION, status);
+    snprintf(buffer, sizeof buffer, "%s %s\r\n", HTTP_VERSION,
+             GetResponseStatus(code));
     send(connection, buffer, strlen(buffer), 0);
-    get_common_header(buffer, sizeof buffer);
+    GetCommonHeader(buffer, sizeof buffer);
     send(connection, buffer, strlen(buffer), 0);
 }
 
-void error_response(int connection, const char *status) {
+static void ErrorResponse(int connection, ResponseStatusCode code) {
     char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof buffer, "%s %s\r\n", HTTP_VERSION, status);
+    snprintf(buffer, sizeof buffer, "%s %s\r\n", HTTP_VERSION,
+             GetResponseStatus(code));
     send(connection, buffer, strlen(buffer), 0);
-    get_common_header(buffer, sizeof buffer);
+    GetCommonHeader(buffer, sizeof buffer);
     send(connection, buffer, strlen(buffer), 0);
     snprintf(buffer, sizeof buffer, "\r\n");
     send(connection, buffer, strlen(buffer), 0);
-    snprintf(buffer, sizeof buffer, "%s\n", status);
+    snprintf(buffer, sizeof buffer, "%s\n", GetResponseStatus(code));
     send(connection, buffer, strlen(buffer), 0);
 }

@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "chttpd.h"
+
 const void *GetInAddr(const struct sockaddr *addr) {
     if (addr->sa_family == AF_INET) {
         return &(((const struct sockaddr_in *)addr)->sin_addr);
@@ -42,4 +44,19 @@ size_t GetLineFromConnection(int connection, char *buffer, size_t buffer_size) {
     }
     buffer[bytes_read] = '\0';
     return bytes_read;
+}
+
+int SendFile(int connection, FILE *file) {
+    char buffer[BUFFER_SIZE];
+    for (;;) {
+        size_t bytes_read = fread(buffer, sizeof(char), sizeof buffer, file);
+        if (bytes_read == 0) {
+            break;
+        }
+        ssize_t bytes_sent = send(connection, buffer, bytes_read, 0);
+        if (bytes_sent == -1) {
+            return 1;
+        }
+    }
+    return 0;
 }
