@@ -8,9 +8,9 @@ static const char *kHTTPVersions[] = {
     "", "HTTP/0.9", "HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3",
 };
 
-HTTPVersion GetHTTPVersion(const char *http_version) {
+HTTPVersion GetHTTPVersion(const char *http_version_string) {
     for (size_t i = 0; i < sizeof kHTTPVersions / sizeof(const char *); ++i) {
-        if (strcmp(http_version, kHTTPVersions[i]) == 0) {
+        if (strcmp(http_version_string, kHTTPVersions[i]) == 0) {
             return i;
         }
     }
@@ -30,17 +30,17 @@ static const char *kRequestMethods[] = {
     "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH",
 };
 
-RequestMethod GetRequestMethod(const char *request_method) {
+RequestMethod GetRequestMethod(const char *request_method_string) {
     for (size_t i = 0; i < sizeof kRequestMethods / sizeof(const char *); ++i) {
-        if (strcmp(request_method, kRequestMethods[i]) == 0) {
+        if (strcmp(request_method_string, kRequestMethods[i]) == 0) {
             return i;
         }
     }
     return 0;
 }
 
-const char *GetResponseStatusString(ResponseStatusCode code) {
-    switch (code) {
+const char *GetResponseStatusString(ResponseStatusCode response_status_code) {
+    switch (response_status_code) {
         case kContinue:
             return "100 Continue";
         case kSwitchingProtocols:

@@ -12,7 +12,7 @@ typedef enum {
     kHTTP_3 = 5,
 } HTTPVersion;
 
-HTTPVersion GetHTTPVersion(const char *http_version);
+HTTPVersion GetHTTPVersion(const char *http_version_string);
 
 const char *GetHTTPVersionString(HTTPVersion http_version);
 
@@ -28,7 +28,7 @@ typedef enum {
     kPATCH = 9,
 } RequestMethod;
 
-RequestMethod GetRequestMethod(const char *request_method);
+RequestMethod GetRequestMethod(const char *request_method_string);
 
 typedef enum {
     // informational responses
@@ -104,6 +104,6 @@ typedef enum {
     kNetworkAuthenticationRequired = 511,
 } ResponseStatusCode;
 
-const char *GetResponseStatusString(ResponseStatusCode code);
+const char *GetResponseStatusString(ResponseStatusCode response_status_code);
 
 #endif  // CHTTPD_HTTP_H_
