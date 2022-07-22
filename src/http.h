@@ -102,7 +102,6 @@ const char *GetResponseStatus(ResponseStatusCode code);
 
 #define REQUEST_HEADER_HOST "Host:"
 
-#define RESPONSE_HEADER_DATE "Date: "
 #define RESPONSE_HEADER_SERVER "Server: "
 #define RESPONSE_HEADER_CONTENT_LENGTH "Content-Length: "
 #define RESPONSE_HEADER_CONTENT_TYPE "Content-Type: "

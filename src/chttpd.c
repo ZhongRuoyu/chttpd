@@ -12,9 +12,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 
+#include "datetime.h"
 #include "http.h"
 
 #define BACKLOG SOMAXCONN
@@ -27,10 +27,6 @@
 #define SERVER "chttpd"
 
 #define INDEX "index.html"
-
-const char *WKDAY[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-const char *MONTH[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 void sigchld_handler(int arg) {
     int saved_errno = errno;
@@ -121,14 +117,6 @@ size_t next_token(const char *str, char *buffer, size_t buffer_size) {
     return token_length;
 }
 
-void get_log_date(char *buffer, size_t buffer_size) {
-    time_t t = time(NULL);
-    struct tm tm = *localtime(&t);
-    snprintf(buffer, buffer_size, "%04d-%02d-%02d %02d:%02d:%02d",
-             1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, tm.tm_hour,
-             tm.tm_min, tm.tm_sec);
-}
-
 int get_http_version(const char *http_version, int *http_version_major,
                      int *http_version_minor) {
     if (strlen(http_version) != 8 || strncmp(http_version, "HTTP", 4) != 0 ||
@@ -141,26 +129,6 @@ int get_http_version(const char *http_version, int *http_version_major,
     return 0;
 }
 
-int get_date_header(char *buffer, size_t buffer_size) {
-    time_t t = time(NULL);
-    struct tm tm = *gmtime(&t);
-
-    int n = 0;
-    if (n < buffer_size) {
-        n += snprintf(buffer + n, buffer_size - n, RESPONSE_HEADER_DATE);
-    }
-    if (n < buffer_size) {
-        n += snprintf(buffer + n, buffer_size - n,
-                      "%s, %02d %s %04d %02d:%02d:%02d GMT", WKDAY[tm.tm_wday],
-                      tm.tm_mday, MONTH[tm.tm_mon], 1900 + tm.tm_year,
-                      tm.tm_hour, tm.tm_min, tm.tm_sec);
-    }
-    if (n < buffer_size) {
-        n += snprintf(buffer + n, buffer_size - n, "\r\n");
-    }
-    return n;
-}
-
 void get_common_header(char *buffer, size_t buffer_size) {
     int n = 0;
     if (n < buffer_size) {
@@ -168,7 +136,7 @@ void get_common_header(char *buffer, size_t buffer_size) {
                       RESPONSE_HEADER_SERVER, SERVER);
     }
     if (n < buffer_size) {
-        n += get_date_header(buffer + n, buffer_size - n);
+        n += GetDateHeader(buffer + n, buffer_size - n);
     }
 }
 
@@ -299,8 +267,8 @@ int initialize(const char *port) {
 int serve_request(const char *host, const char *port, const char *root,
                   int connection, const char *from_addr_ip,
                   in_port_t from_addr_port) {
-    char log_time[LINE_BUFFER_SIZE];
-    get_log_date(log_time, sizeof log_time);
+    char log_time[kDateHeaderBufferSize];
+    GetLogDate(log_time, sizeof log_time);
 
     char request_line[BUFFER_SIZE];
     size_t request_line_length =
