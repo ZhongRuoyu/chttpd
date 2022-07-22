@@ -15,6 +15,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "http.h"
+
 #define BACKLOG SOMAXCONN
 
 #define BUFFER_SIZE 4096
@@ -22,40 +24,10 @@
 #define LINE_BUFFER_SIZE 1024
 #define URI_BUFFER_SIZE 2048
 
-#define HTTP_VERSION "HTTP/1.1"
-#define HTTP_VERSION_MAJOR 1
-#define HTTP_VERSION_MINOR 1
 #define SERVER "chttpd"
 
 #define INDEX "index.html"
 
-#define REQUEST_HEADER_HOST "Host:"
-
-#define RESPONSE_OK "200 OK"
-#define RESPONSE_BAD_REQUEST "400 Bad Request"
-#define RESPONSE_NOT_FOUND "404 Not Found"
-#define RESPONSE_URI_TOO_LONG "414 URI Too Long"
-#define RESPONSE_NOT_IMPLEMENTED "501 Not Implemented"
-#define RESPONSE_HTTP_VERSION_NOT_SUPPORTED "505 HTTP Version Not Supported"
-
-#define RESPONSE_HEADER_DATE "Date: "
-#define RESPONSE_HEADER_SERVER "Server: "
-#define RESPONSE_HEADER_CONTENT_LENGTH "Content-Length: "
-#define RESPONSE_HEADER_CONTENT_TYPE "Content-Type: "
-
-enum request_method {
-    GET,
-    HEAD,
-    POST,
-    PUT,
-    DELETE,
-    CONNECT,
-    OPTIONS,
-    TRACE,
-};
-const char *REQUEST_METHODS[] = {
-    "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE",
-};
 const char *WKDAY[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 const char *MONTH[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -344,14 +316,14 @@ int serve_request(const char *host, const char *port, const char *root,
             next_token(request_line + p_request_line, method, sizeof method);
         p_request_line += method_length;
         if (method_length == 0) {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         }
 
         if (isspace(request_line[p_request_line])) {
             ++p_request_line;
         } else {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         }
 
@@ -359,14 +331,14 @@ int serve_request(const char *host, const char *port, const char *root,
             next_token(request_line + p_request_line, uri, sizeof uri);
         p_request_line += uri_length;
         if (uri_length == 0) {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         }
 
         if (isspace(request_line[p_request_line])) {
             ++p_request_line;
         } else {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         }
 
@@ -374,12 +346,12 @@ int serve_request(const char *host, const char *port, const char *root,
             request_line + p_request_line, http_version, sizeof http_version);
         p_request_line += http_version_length;
         if (http_version_length == 0) {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         }
 
         if (strlen(request_line + p_request_line) > 0) {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         }
     }
@@ -388,13 +360,13 @@ int serve_request(const char *host, const char *port, const char *root,
     int http_version_minor;
     if (get_http_version(http_version, &http_version_major,
                          &http_version_minor) != 0) {
-        error_response(connection, RESPONSE_BAD_REQUEST);
+        error_response(connection, GetResponseStatus(kBadRequest));
         return 1;
     }
     if (HTTP_VERSION_MAJOR < http_version_major ||
         (HTTP_VERSION_MAJOR == http_version_major &&
          HTTP_VERSION_MINOR < http_version_minor)) {
-        error_response(connection, RESPONSE_HTTP_VERSION_NOT_SUPPORTED);
+        error_response(connection, GetResponseStatus(kHTTPVersionNotSupported));
         return 1;
     }
 
@@ -406,7 +378,7 @@ int serve_request(const char *host, const char *port, const char *root,
         if (strncasecmp(REQUEST_HEADER_HOST, buffer,
                         strlen(REQUEST_HEADER_HOST)) == 0) {
             if (strnlen(uri_host, sizeof uri_host) > 0) {
-                error_response(connection, RESPONSE_BAD_REQUEST);
+                error_response(connection, GetResponseStatus(kBadRequest));
                 return 1;
             }
             str_trim(uri_host, buffer + strlen(REQUEST_HEADER_HOST),
@@ -422,7 +394,7 @@ int serve_request(const char *host, const char *port, const char *root,
     if (http_version_major > 1 ||
         http_version_major == 1 && http_version_minor >= 1) {
         if (strnlen(uri_host, sizeof uri_host) == 0) {
-            error_response(connection, RESPONSE_BAD_REQUEST);
+            error_response(connection, GetResponseStatus(kBadRequest));
             return 1;
         } else {
             if (strncmp(uri_host, host, sizeof uri_host) != 0 ||
@@ -433,23 +405,16 @@ int serve_request(const char *host, const char *port, const char *root,
         }
     }
 
-    size_t p_request_method = 0;
-    while (p_request_method < sizeof REQUEST_METHODS / sizeof(const char *)) {
-        if (strcmp(method, REQUEST_METHODS[p_request_method]) == 0) {
-            break;
-        } else {
-            ++p_request_method;
-        }
-    }
-    if (p_request_method == sizeof REQUEST_METHODS / sizeof(const char *)) {
-        error_response(connection, RESPONSE_BAD_REQUEST);
+    RequestMethod request_method = GetRequestMethod(method);
+    if (request_method == kUndefined) {
+        error_response(connection, GetResponseStatus(kBadRequest));
         return 1;
     }
 
     printf("[%s [%s]:%d] %s\n", log_time, from_addr_ip, from_addr_port,
            request_line);
-    switch (p_request_method) {
-        case GET: {
+    switch (request_method) {
+        case kGET: {
             {
                 char *query_string = strchr(uri, '?');
                 if (query_string != NULL) {
@@ -461,19 +426,20 @@ int serve_request(const char *host, const char *port, const char *root,
             {
                 size_t root_length = strlen(root);
                 if (root_length + 1 >= sizeof path) {
-                    error_response(connection, RESPONSE_URI_TOO_LONG);
+                    error_response(connection, GetResponseStatus(kURITooLong));
                     return 1;
                 }
                 str_copy(path, root, sizeof path);
                 str_copy(path + root_length, uri, sizeof path - root_length);
                 path_length = strnlen(path, sizeof path);
                 if (path_length == sizeof path) {
-                    error_response(connection, RESPONSE_URI_TOO_LONG);
+                    error_response(connection, GetResponseStatus(kURITooLong));
                     return 1;
                 }
                 if (path[path_length - 1] == '/') {
                     if (path_length + strlen(INDEX) + 1 > sizeof path) {
-                        error_response(connection, RESPONSE_URI_TOO_LONG);
+                        error_response(connection,
+                                       GetResponseStatus(kURITooLong));
                         return 1;
                     }
                     str_copy(path + path_length, INDEX,
@@ -485,22 +451,22 @@ int serve_request(const char *host, const char *port, const char *root,
         }
         default: {
             // TODO: other request methods
-            error_response(connection, RESPONSE_NOT_IMPLEMENTED);
+            error_response(connection, GetResponseStatus(kNotImplemented));
             return 1;
         }
     }
 
-    error_response(connection, RESPONSE_NOT_IMPLEMENTED);
+    error_response(connection, GetResponseStatus(kNotImplemented));
     return 1;
 }
 
 int serve_file(int connection, const char *path) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
-        error_response(connection, RESPONSE_NOT_FOUND);
+        error_response(connection, GetResponseStatus(kNotFound));
         return 1;
     }
-    success_response(connection, RESPONSE_OK);
+    success_response(connection, GetResponseStatus(kOK));
 
     char buffer[BUFFER_SIZE];
 
