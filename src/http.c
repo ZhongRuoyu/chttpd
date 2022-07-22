@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const char *kRequestMethods[] = {
+    "",       "GET",     "HEAD",    "POST",  "PUT",
+    "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH",
+};
+
 RequestMethod GetRequestMethod(const char *request_method) {
     for (size_t i = 0; i < sizeof kRequestMethods / sizeof(const char *); ++i) {
         if (strcmp(request_method, kRequestMethods[i]) == 0) {
@@ -13,7 +18,7 @@ RequestMethod GetRequestMethod(const char *request_method) {
     return 0;
 }
 
-const char *GetResponseStatus(ResponseStatusCode code) {
+const char *GetResponseStatusString(ResponseStatusCode code) {
     switch (code) {
         case kContinue:
             return "100 Continue";

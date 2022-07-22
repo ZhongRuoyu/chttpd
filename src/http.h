@@ -16,11 +16,6 @@ typedef enum {
     kPATCH = 9,
 } RequestMethod;
 
-static const char *kRequestMethods[] = {
-    "",       "GET",     "HEAD",    "POST",  "PUT",
-    "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH",
-};
-
 RequestMethod GetRequestMethod(const char *request_method);
 
 typedef enum {
@@ -97,7 +92,7 @@ typedef enum {
     kNetworkAuthenticationRequired = 511,
 } ResponseStatusCode;
 
-const char *GetResponseStatus(ResponseStatusCode code);
+const char *GetResponseStatusString(ResponseStatusCode code);
 
 int GetHTTPVersion(const char *http_version, int *http_version_major,
                    int *http_version_minor);
