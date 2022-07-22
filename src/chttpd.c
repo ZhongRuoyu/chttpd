@@ -406,7 +406,7 @@ int serve_request(const char *host, const char *port, const char *root,
     }
 
     RequestMethod request_method = GetRequestMethod(method);
-    if (request_method == kUndefined) {
+    if (request_method == 0) {
         error_response(connection, GetResponseStatus(kBadRequest));
         return 1;
     }

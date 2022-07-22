@@ -9,7 +9,7 @@ RequestMethod GetRequestMethod(const char *request_method) {
             return i;
         }
     }
-    return kUndefined;
+    return 0;
 }
 
 const char *GetResponseStatus(ResponseStatusCode code) {

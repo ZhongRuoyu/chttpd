@@ -1,8 +1,6 @@
 #ifndef CHTTPD_HTTP_H_
 #define CHTTPD_HTTP_H_
 
-static const int kUndefined = 0;
-
 typedef enum {
     kGET = 1,
     kHEAD = 2,
