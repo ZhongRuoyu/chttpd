@@ -185,7 +185,7 @@ static size_t GetCommonHeader(const Context *context, char *buffer,
     if (n < buffer_size) {
         n += GetDateHeader(buffer + n, buffer_size - n);
     }
-    if (n < buffer_size && context->server != NULL) {
+    if (n < buffer_size) {
         n += snprintf(buffer + n, buffer_size - n, "Server: %s\r\n",
                       context->server);
     }

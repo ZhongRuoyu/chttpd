@@ -24,6 +24,7 @@ void Usage(FILE *out) {
         "  -p PORT, --port PORT  Set port number to listen to (default: 80)\n"
         "  -r ROOT, --root ROOT  Set root directory to serve (default: .)\n"
         "  --server SERVER       Set server name to show in response header\n"
+        "                          (default: chttpd)\n"
         "");
 }
 

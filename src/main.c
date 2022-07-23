@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
         .host = NULL,
         .port = "80",
         .root = ".",
-        .server = NULL,
+        .server = "chttpd",
     };
     BuildContext(&context, &args);
     int socket = Initialize(&context);
