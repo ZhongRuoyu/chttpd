@@ -28,4 +28,3 @@ int GetDateHeader(char *buffer, size_t buffer_size) {
     }
     return n;
 }
-

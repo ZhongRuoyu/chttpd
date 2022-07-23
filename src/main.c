@@ -108,21 +108,15 @@ int main(int argc, char **argv) {
     printf("Listening at port %s...\n", context->port);
 
     for (;;) {
-        struct sockaddr_storage from_addr;
-        socklen_t from_addr_len = sizeof from_addr;
-        int connection =
-            accept(s, (struct sockaddr *)&from_addr, &from_addr_len);
+        struct sockaddr_storage from_addr_storage;
+        socklen_t from_addr_storage_len = sizeof from_addr_storage;
+        int connection = accept(s, (struct sockaddr *)&from_addr_storage,
+                                &from_addr_storage_len);
         if (connection == -1) {
             Warning("failed to accept connection: %s", strerror(errno));
             continue;
         }
-
-        char from_addr_ip[INET6_ADDRSTRLEN];
-        inet_ntop(from_addr.ss_family,
-                  GetInAddr((const struct sockaddr *)&from_addr), from_addr_ip,
-                  sizeof from_addr_ip);
-        in_port_t from_addr_port =
-            GetInPort((const struct sockaddr *)&from_addr);
+        SocketAddress from_addr = GetSocketAddress(&from_addr_storage);
 
         pid_t child_pid = fork();
         if (child_pid == -1) {
@@ -132,8 +126,7 @@ int main(int argc, char **argv) {
         }
         if (child_pid == 0) {
             close(s);
-            ServeRequest(context->host, context->port, context->root,
-                         connection, from_addr_ip, from_addr_port);
+            ServeRequest(context, connection, from_addr);
             close(connection);
             exit(EXIT_SUCCESS);
         } else {

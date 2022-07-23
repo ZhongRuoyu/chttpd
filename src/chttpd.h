@@ -1,8 +1,10 @@
 #ifndef CHTTPD_CHTTPD_H_
 #define CHTTPD_CHTTPD_H_
 
-#include <netinet/in.h>
-#include <stdio.h>
+#include <sys/socket.h>
+
+#include "context.h"
+#include "socket.h"
 
 #define BACKLOG SOMAXCONN
 
@@ -11,8 +13,6 @@
 #define LINE_BUFFER_SIZE 1024
 #define URI_BUFFER_SIZE 8192
 
-int ServeRequest(const char *host, const char *port, const char *root,
-                 int connection, const char *from_addr_ip,
-                 in_port_t from_addr_port);
+int ServeRequest(Context *context, int connection, SocketAddress from_addr);
 
 #endif  // CHTTPD_CHTTPD_H_

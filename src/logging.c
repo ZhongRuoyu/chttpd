@@ -1,9 +1,10 @@
 #include "logging.h"
 
-#include <netinet/in.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <time.h>
+
+#include "socket.h"
 
 #define LOG_TIME_BUFFER_SIZE 20
 
@@ -16,10 +17,9 @@ static int GetLogTime(char *buffer, size_t buffer_size) {
     return n;
 }
 
-void LogRequestLine(const char *from_addr_ip, in_port_t from_addr_port,
-                    const char *request_line) {
+void LogRequestLine(SocketAddress from_addr, const char *request_line) {
     char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
-    printf("[%s [%s]:%d] %s\n", log_time, from_addr_ip, from_addr_port,
+    printf("[%s [%s]:%d] %s\n", log_time, from_addr.ip, from_addr.port,
            request_line);
 }

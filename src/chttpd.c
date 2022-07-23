@@ -2,7 +2,6 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +10,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "context.h"
 #include "datetime.h"
 #include "errors.h"
 #include "http.h"
@@ -23,9 +23,7 @@ static int ServeFile(int connection, const char *path);
 static void SuccessResponse(int connection, ResponseStatusCode code);
 static void ErrorResponse(int connection, ResponseStatusCode code);
 
-int ServeRequest(const char *host, const char *port, const char *root,
-                 int connection, const char *from_addr_ip,
-                 in_port_t from_addr_port) {
+int ServeRequest(Context *context, int connection, SocketAddress from_addr) {
     char request_line[BUFFER_SIZE];
     size_t request_line_length =
         GetLineFromConnection(connection, request_line, sizeof request_line);
@@ -120,9 +118,9 @@ int ServeRequest(const char *host, const char *port, const char *root,
             ErrorResponse(connection, kBadRequest);
             return 1;
         } else {
-            if (strncmp(uri_host, host, sizeof uri_host) != 0 ||
+            if (strncmp(uri_host, context->host, sizeof uri_host) != 0 ||
                 strnlen(uri_port, sizeof uri_port) > 0 &&
-                    strncmp(uri_port, port, sizeof uri_port) != 0) {
+                    strncmp(uri_port, context->port, sizeof uri_port) != 0) {
                 return 1;
             }
         }
@@ -134,7 +132,7 @@ int ServeRequest(const char *host, const char *port, const char *root,
         return 1;
     }
 
-    LogRequestLine(from_addr_ip, from_addr_port, request_line);
+    LogRequestLine(from_addr, request_line);
     switch (request_method) {
         case kGET: {
             {
@@ -146,12 +144,12 @@ int ServeRequest(const char *host, const char *port, const char *root,
             char path[BUFFER_SIZE];
             size_t path_length = 0;
             {
-                size_t root_length = strlen(root);
+                size_t root_length = strlen(context->root);
                 if (root_length + 1 >= sizeof path) {
                     ErrorResponse(connection, kURITooLong);
                     return 1;
                 }
-                CopyString(path, root, sizeof path);
+                CopyString(path, context->root, sizeof path);
                 CopyString(path + root_length, uri, sizeof path - root_length);
                 path_length = strnlen(path, sizeof path);
                 if (path_length == sizeof path) {
