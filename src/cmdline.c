@@ -15,7 +15,8 @@ void Usage(FILE *out) {
         "  --help                Report usage information\n"
         "  -h HOST, --host HOST  Set hostname (default: localhost)\n"
         "  -p PORT, --port PORT  Set port number to listen to (default: 80)\n"
-        "  -r ROOT, --root ROOT  Set root directory to serve (default: .)\n");
+        "  -r ROOT, --root ROOT  Set root directory to serve (default: .)\n"
+        "  --server SERVER       Set server name to show in response header\n");
 }
 
 static int ReadFlagWithoutDash(int argc, char **argv, int i, size_t offset,
@@ -115,6 +116,9 @@ void ParseArgs(int argc, char **argv, Args *args) {
             i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "r", &args->root)) ||
                    (arg_adv = ReadArg(argc, argv, i, "root", &args->root))) {
+            i += arg_adv;
+        } else if ((arg_adv =
+                        ReadArg(argc, argv, i, "server", &args->server))) {
             i += arg_adv;
         } else {
             Fatal("unknown command line option: %s", argv[i]);

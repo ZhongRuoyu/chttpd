@@ -9,6 +9,7 @@ typedef struct {
     const char *host;
     const char *port;
     const char *root;
+    const char *server;
 } Args;
 
 void Usage(FILE *out);

@@ -16,6 +16,7 @@ typedef struct {
     const char *host;
     const char *port;
     const char *root;
+    const char *server;
 } Context;
 
 int ServeRequest(Context *context, int connection, SocketAddress *from_addr);

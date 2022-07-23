@@ -25,6 +25,9 @@ static void BuildContext(Context *context, const Args *args) {
     if (args->root != NULL) {
         context->root = args->root;
     }
+    if (args->server != NULL) {
+        context->server = args->server;
+    }
 }
 
 static void SigchldHandler(int arg) {
@@ -113,6 +116,7 @@ int main(int argc, char **argv) {
         .host = NULL,
         .port = NULL,
         .root = NULL,
+        .server = NULL,
     };
     ParseArgs(argc - 1, argv + 1, &args);
     if (args.help) {
@@ -124,6 +128,7 @@ int main(int argc, char **argv) {
         .host = "localhost",
         .port = "80",
         .root = ".",
+        .server = NULL,
     };
     BuildContext(&context, &args);
     int s = Initialize(&context);
