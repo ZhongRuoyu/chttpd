@@ -10,6 +10,8 @@
 #include <unistd.h>
 
 #include "chttpd.h"
+#include "cmdline.h"
+#include "context.h"
 #include "socket.h"
 
 static void SigchldHandler(int arg) {
@@ -97,15 +99,32 @@ static int Initialize(const char *port) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 4) {
-        fprintf(stderr, "Usage: httpd <host> <port> <path-to-root>\n");
+    Context *context = GetContext();
+
+    int optind = ParseArguments(argc, argv, context);
+    if (optind == -1) {
+        Usage(stderr);
         exit(EXIT_FAILURE);
     }
-    const char *host = argv[1];
-    const char *port = argv[2];
-    const char *root = argv[3];
-    int s = Initialize(port);
-    printf("Listening at port %s...\n", port);
+    argc -= optind;
+    argv += optind;
+    if (argc > 0) {
+        fprintf(stderr,
+                "unknown command line argument%s:", argc > 1 ? "s" : "");
+        for (int i = 0; i < argc; ++i) {
+            fprintf(stderr, " %s", argv[i]);
+        }
+        fprintf(stderr, "\n");
+        Usage(stderr);
+        exit(EXIT_FAILURE);
+    }
+    if (context->help) {
+        Usage(stdout);
+        exit(EXIT_SUCCESS);
+    }
+
+    int s = Initialize(context->port);
+    printf("Listening at port %s...\n", context->port);
 
     for (;;) {
         struct sockaddr_storage from_addr;
@@ -132,8 +151,8 @@ int main(int argc, char **argv) {
         }
         if (child_pid == 0) {
             close(s);
-            ServeRequest(host, port, root, connection, from_addr_ip,
-                         from_addr_port);
+            ServeRequest(context->host, context->port, context->root,
+                         connection, from_addr_ip, from_addr_port);
             close(connection);
             exit(EXIT_SUCCESS);
         } else {
@@ -143,5 +162,5 @@ int main(int argc, char **argv) {
 
     close(s);
 
-    return 0;
+    exit(EXIT_SUCCESS);
 }
