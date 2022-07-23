@@ -7,16 +7,31 @@
 
 #include "errors.h"
 
+#ifdef GIT_HASH
+static const char kVersion[] = "chttpd " CHTTPD_VERSION " (" GIT_HASH ")";
+#else
+static const char kVersion[] = "chttpd " CHTTPD_VERSION;
+#endif
+
 void Usage(FILE *out) {
     fprintf(
         out,
         "usage: chttpd [options]\n"
         "options:\n"
         "  --help                Report usage information\n"
+        "  -v, --version         Report version information\n"
         "  -h HOST, --host HOST  Set hostname (default: localhost)\n"
         "  -p PORT, --port PORT  Set port number to listen to (default: 80)\n"
         "  -r ROOT, --root ROOT  Set root directory to serve (default: .)\n"
-        "  --server SERVER       Set server name to show in response header\n");
+        "  --server SERVER       Set server name to show in response header\n"
+        "");
+}
+
+void Version(FILE *out) {
+    fprintf(out,
+            "%s\n"
+            "",
+            kVersion);
 }
 
 static int ReadFlagWithoutDash(int argc, char **argv, int i, size_t offset,
@@ -107,6 +122,10 @@ void ParseArgs(int argc, char **argv, Args *args) {
     for (int i = 0, arg_adv; i < argc;) {
         if ((arg_adv = ReadFlag(argc, argv, i, "help"))) {
             args->help = true;
+            i += arg_adv;
+        } else if ((arg_adv = ReadFlag(argc, argv, i, "v")) ||
+                   (arg_adv = ReadFlag(argc, argv, i, "version"))) {
+            args->version = true;
             i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "h", &args->host)) ||
                    (arg_adv = ReadArg(argc, argv, i, "host", &args->host))) {

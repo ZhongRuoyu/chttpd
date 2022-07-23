@@ -113,6 +113,7 @@ static int Initialize(Context *context) {
 int main(int argc, char **argv) {
     Args args = {
         .help = false,
+        .version = false,
         .host = NULL,
         .port = NULL,
         .root = NULL,
@@ -121,6 +122,10 @@ int main(int argc, char **argv) {
     ParseArgs(argc - 1, argv + 1, &args);
     if (args.help) {
         Usage(stdout);
+        exit(EXIT_SUCCESS);
+    }
+    if (args.version) {
+        Version(stdout);
         exit(EXIT_SUCCESS);
     }
 

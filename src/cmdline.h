@@ -6,6 +6,7 @@
 
 typedef struct {
     bool help;
+    bool version;
     const char *host;
     const char *port;
     const char *root;
@@ -13,6 +14,8 @@ typedef struct {
 } Args;
 
 void Usage(FILE *out);
+
+void Version(FILE *out);
 
 void ParseArgs(int argc, char **argv, Args *args);
 
