@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "errors.h"
+
 void Usage(FILE *out) {
     fprintf(
         out,
@@ -68,8 +70,7 @@ static int ReadArgWithoutDash(int argc, char **argv, int i, size_t offset,
         return 0;
     }
     if (i + 1 >= argc) {
-        fprintf(stderr, "option %s: argument missing\n", argv[i]);
-        exit(EXIT_FAILURE);
+        Fatal("option %s: argument missing", argv[i]);
     }
     *value = argv[i + 1];
     return 2;
@@ -116,9 +117,7 @@ void ParseArguments(int argc, char **argv, Context *context) {
                    (arg_adv = ReadArg(argc, argv, i, "root", &context->root))) {
             i += arg_adv;
         } else {
-            fprintf(stderr, "unknown command line option: %s\n", argv[i]);
-            Usage(stderr);
-            exit(EXIT_FAILURE);
+            Fatal("unknown command line option: %s", argv[i]);
         }
     }
 }

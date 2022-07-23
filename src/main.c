@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -12,6 +13,7 @@
 #include "chttpd.h"
 #include "cmdline.h"
 #include "context.h"
+#include "errors.h"
 #include "socket.h"
 
 static void SigchldHandler(int arg) {
@@ -45,9 +47,8 @@ static int Initialize(const char *port) {
     {
         int gai_status = getaddrinfo(NULL, port, &hints, &addr_info_head);
         if (gai_status != 0) {
-            fprintf(stderr, "failed to get port info: %s\n",
-                    gai_strerror(gai_status));
-            exit(EXIT_FAILURE);
+            Fatal("failed to get info for port %s: %s", port,
+                  gai_strerror(gai_status));
         }
     }
 
@@ -64,10 +65,9 @@ static int Initialize(const char *port) {
             int yes = 1;
             if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes) ==
                 -1) {
-                perror("failed to configure socket");
                 freeaddrinfo(addr_info_head);
                 close(s);
-                exit(EXIT_FAILURE);
+                Fatal("failed to configure socket: %s", strerror(errno));
             }
         }
         if (bind(s, addr_info->ai_addr, addr_info->ai_addrlen) == -1) {
@@ -77,22 +77,19 @@ static int Initialize(const char *port) {
         break;
     }
     if (addr_info == NULL) {
-        perror("failed to bind socket");
         freeaddrinfo(addr_info_head);
-        exit(EXIT_FAILURE);
+        Fatal("failed to bind socket: %s", strerror(errno));
     }
     freeaddrinfo(addr_info_head);
 
     if (InstallSignalHandler() != 0) {
-        perror("failed to set up signal handler");
         close(s);
-        exit(EXIT_FAILURE);
+        Fatal("failed to set up signal handler: %s", strerror(errno));
     }
 
     if (listen(s, BACKLOG) == -1) {
-        perror("failed to listen");
         close(s);
-        exit(EXIT_FAILURE);
+        Fatal("failed to listen to socket: %s", strerror(errno));
     }
 
     return s;
@@ -116,7 +113,7 @@ int main(int argc, char **argv) {
         int connection =
             accept(s, (struct sockaddr *)&from_addr, &from_addr_len);
         if (connection == -1) {
-            perror("failed to accept connection");
+            Warning("failed to accept connection: %s", strerror(errno));
             continue;
         }
 
@@ -129,7 +126,7 @@ int main(int argc, char **argv) {
 
         pid_t child_pid = fork();
         if (child_pid == -1) {
-            perror("failed to create child process");
+            Warning("failed to create child process: %s", strerror(errno));
             close(connection);
             continue;
         }

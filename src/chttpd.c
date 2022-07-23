@@ -1,6 +1,7 @@
 #include "chttpd.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -11,6 +12,7 @@
 #include <sys/types.h>
 
 #include "datetime.h"
+#include "errors.h"
 #include "http.h"
 #include "logging.h"
 #include "socket.h"
@@ -228,7 +230,7 @@ static int ServeFile(int connection, const char *path) {
 
     int send_file_error = SendFile(connection, file);
     if (send_file_error != 0) {
-        perror("failed to send response");
+        Warning("failed to send response: %s", strerror(errno));
         return send_file_error;
     }
     return 0;
