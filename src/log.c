@@ -42,6 +42,16 @@ static void ColorOutput(FILE *file, Color color, const char *msg) {
     }
 }
 
+void Info(const char *format, ...) {
+    fprintf(stderr, "chttpd: ");
+    ColorOutput(stderr, kGreen, "info: ");
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+}
+
 void Warning(const char *format, ...) {
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kYellow, "warning: ");

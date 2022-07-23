@@ -7,6 +7,8 @@
 #define __attribute__(x)
 #endif
 
+void Info(const char *format, ...) __attribute__((format(printf, 1, 2)));
+
 void Warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 void Error(const char *format, ...) __attribute__((format(printf, 1, 2)));

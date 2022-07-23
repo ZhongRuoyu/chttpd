@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     };
     BuildContext(&context, &args);
     int s = Initialize(&context);
-    printf("Listening at port %s...\n", context.port);
+    Info("listening at port %s", context.port);
 
     for (;;) {
         struct sockaddr_storage from_addr_storage;
