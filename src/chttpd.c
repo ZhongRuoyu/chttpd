@@ -23,7 +23,7 @@ static int ServeFile(int connection, const char *path);
 static void SuccessResponse(int connection, ResponseStatusCode code);
 static void ErrorResponse(int connection, ResponseStatusCode code);
 
-int ServeRequest(Context *context, int connection, SocketAddress from_addr) {
+int ServeRequest(Context *context, int connection, SocketAddress *from_addr) {
     char request_line[BUFFER_SIZE];
     size_t request_line_length =
         GetLineFromConnection(connection, request_line, sizeof request_line);

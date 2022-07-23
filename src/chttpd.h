@@ -13,6 +13,6 @@
 #define LINE_BUFFER_SIZE 1024
 #define URI_BUFFER_SIZE 8192
 
-int ServeRequest(Context *context, int connection, SocketAddress from_addr);
+int ServeRequest(Context *context, int connection, SocketAddress *from_addr);
 
 #endif  // CHTTPD_CHTTPD_H_

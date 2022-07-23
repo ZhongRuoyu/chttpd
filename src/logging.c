@@ -17,9 +17,9 @@ static int GetLogTime(char *buffer, size_t buffer_size) {
     return n;
 }
 
-void LogRequestLine(SocketAddress from_addr, const char *request_line) {
+void LogRequestLine(SocketAddress *from_addr, const char *request_line) {
     char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
-    printf("[%s [%s]:%d] %s\n", log_time, from_addr.ip, from_addr.port,
+    printf("[%s [%s]:%d] %s\n", log_time, from_addr->ip, from_addr->port,
            request_line);
 }

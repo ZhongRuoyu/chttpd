@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
         }
         if (child_pid == 0) {
             close(s);
-            ServeRequest(context, connection, from_addr);
+            ServeRequest(context, connection, &from_addr);
             close(connection);
             exit(EXIT_SUCCESS);
         } else {
