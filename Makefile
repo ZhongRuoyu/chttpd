@@ -1,7 +1,7 @@
 CFLAGS = -O2
 LDFLAGS =
 
-SRCS = $(shell find src -name *.c | sort)
+SRCS = $(shell find src -name '*.c' | sort)
 OBJS = $(SRCS:src/%.c=out/%.o)
 DEPS = $(SRCS:src/%.c=out/%.d)
 
