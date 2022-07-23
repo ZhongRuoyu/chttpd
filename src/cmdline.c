@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "errors.h"
+#include "log.h"
 
 #ifdef GIT_HASH
 static const char kVersion[] = "chttpd " CHTTPD_VERSION " (" GIT_HASH ")";

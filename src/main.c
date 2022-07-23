@@ -12,7 +12,7 @@
 
 #include "chttpd.h"
 #include "cmdline.h"
-#include "errors.h"
+#include "log.h"
 #include "socket.h"
 
 static void BuildContext(Context *context, const Args *args) {

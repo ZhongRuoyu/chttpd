@@ -1,5 +1,7 @@
-#ifndef CHTTPD_ERRORS_H_
-#define CHTTPD_ERRORS_H_
+#ifndef CHTTPD_LOG_H_
+#define CHTTPD_LOG_H_
+
+#include "socket.h"
 
 #ifndef __GNUC__
 #define __attribute__(x)
@@ -11,4 +13,6 @@ void Error(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 void Fatal(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
-#endif  // CHTTPD_ERRORS_H_
+void LogRequestLine(SocketAddress *from_addr, const char *request_line);
+
+#endif  // CHTTPD_LOG_H_

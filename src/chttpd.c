@@ -11,9 +11,8 @@
 #include <sys/types.h>
 
 #include "datetime.h"
-#include "errors.h"
 #include "http.h"
-#include "logging.h"
+#include "log.h"
 #include "socket.h"
 #include "strings.h"
 
