@@ -52,7 +52,7 @@ static int InstallSignalHandler() {
     return 0;
 }
 
-static int Initialize(Context *context) {
+static int Initialize(const Context *context) {
     struct addrinfo hints = {.ai_flags = AI_PASSIVE,
                              .ai_family = AF_UNSPEC,
                              .ai_socktype = SOCK_STREAM};
@@ -136,13 +136,13 @@ int main(int argc, char **argv) {
         .server = NULL,
     };
     BuildContext(&context, &args);
-    int s = Initialize(&context);
+    int socket = Initialize(&context);
     Info("listening at port %s", context.port);
 
     for (;;) {
         struct sockaddr_storage from_addr_storage;
         socklen_t from_addr_storage_len = sizeof from_addr_storage;
-        int connection = accept(s, (struct sockaddr *)&from_addr_storage,
+        int connection = accept(socket, (struct sockaddr *)&from_addr_storage,
                                 &from_addr_storage_len);
         if (connection == -1) {
             Warning("failed to accept connection: %s", strerror(errno));
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
             continue;
         }
         if (child_pid == 0) {
-            close(s);
+            close(socket);
             ServeRequest(&context, connection, &from_addr);
             close(connection);
             exit(EXIT_SUCCESS);
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    close(s);
+    close(socket);
 
     exit(EXIT_SUCCESS);
 }

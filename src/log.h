@@ -15,6 +15,6 @@ void Error(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 void Fatal(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
-void LogRequestLine(SocketAddress *from_addr, const char *request_line);
+void LogRequestLine(const SocketAddress *from_addr, const char *request_line);
 
 #endif  // CHTTPD_LOG_H_

@@ -16,15 +16,16 @@
 #include "socket.h"
 #include "strings.h"
 
-static size_t GetCommonHeader(Context *context, char *buffer,
+static size_t GetCommonHeader(const Context *context, char *buffer,
                               size_t buffer_size);
-static int ServeFile(Context *context, int connection, const char *path);
-static void SuccessResponse(Context *context, int connection,
+static int ServeFile(const Context *context, int connection, const char *path);
+static void SuccessResponse(const Context *context, int connection,
                             ResponseStatusCode code);
-static void ErrorResponse(Context *context, int connection,
+static void ErrorResponse(const Context *context, int connection,
                           ResponseStatusCode code);
 
-int ServeRequest(Context *context, int connection, SocketAddress *from_addr) {
+int ServeRequest(const Context *context, int connection,
+                 const SocketAddress *from_addr) {
     char request_line[BUFFER_SIZE];
     size_t request_line_length =
         GetLineFromConnection(connection, request_line, sizeof request_line);
@@ -180,7 +181,7 @@ int ServeRequest(Context *context, int connection, SocketAddress *from_addr) {
     return 1;
 }
 
-static size_t GetCommonHeader(Context *context, char *buffer,
+static size_t GetCommonHeader(const Context *context, char *buffer,
                               size_t buffer_size) {
     size_t n = 0;
     if (n < buffer_size) {
@@ -193,7 +194,7 @@ static size_t GetCommonHeader(Context *context, char *buffer,
     return n;
 }
 
-static int ServeFile(Context *context, int connection, const char *path) {
+static int ServeFile(const Context *context, int connection, const char *path) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
         ErrorResponse(context, connection, kNotFound);
@@ -237,7 +238,7 @@ static int ServeFile(Context *context, int connection, const char *path) {
     return 0;
 }
 
-static void SuccessResponse(Context *context, int connection,
+static void SuccessResponse(const Context *context, int connection,
                             ResponseStatusCode code) {
     char buffer[BUFFER_SIZE];
     snprintf(buffer, sizeof buffer, "%s %s\r\n",
@@ -247,7 +248,7 @@ static void SuccessResponse(Context *context, int connection,
     send(connection, buffer, strlen(buffer), 0);
 }
 
-static void ErrorResponse(Context *context, int connection,
+static void ErrorResponse(const Context *context, int connection,
                           ResponseStatusCode code) {
     char buffer[BUFFER_SIZE];
     snprintf(buffer, sizeof buffer, "%s %s\r\n",
