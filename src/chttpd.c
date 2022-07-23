@@ -113,7 +113,6 @@ int ServeRequest(const Context *context, int connection,
                 CopyString(uri_port, port_seperator + 1, sizeof uri_port);
             }
         }
-        // TODO: read and process request headers
     }
     if (http_version == kHTTP_1_1) {
         if (strnlen(uri_host, sizeof uri_host) == 0) {
@@ -171,7 +170,6 @@ int ServeRequest(const Context *context, int connection,
             return ServeFile(context, connection, path);
         }
         default: {
-            // TODO: other request methods
             ErrorResponse(context, connection, kNotImplemented);
             return 1;
         }
