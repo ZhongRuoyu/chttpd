@@ -102,19 +102,19 @@ static int ReadArg(int argc, char **argv, int i, const char *name,
     return 0;
 }
 
-void ParseArguments(int argc, char **argv, Context *context) {
+void ParseArgs(int argc, char **argv, Args *args) {
     for (int i = 0, arg_adv; i < argc;) {
         if ((arg_adv = ReadFlag(argc, argv, i, "help"))) {
-            context->help = true;
+            args->help = true;
             i += arg_adv;
-        } else if ((arg_adv = ReadArg(argc, argv, i, "h", &context->host)) ||
-                   (arg_adv = ReadArg(argc, argv, i, "host", &context->host))) {
+        } else if ((arg_adv = ReadArg(argc, argv, i, "h", &args->host)) ||
+                   (arg_adv = ReadArg(argc, argv, i, "host", &args->host))) {
             i += arg_adv;
-        } else if ((arg_adv = ReadArg(argc, argv, i, "p", &context->port)) ||
-                   (arg_adv = ReadArg(argc, argv, i, "port", &context->port))) {
+        } else if ((arg_adv = ReadArg(argc, argv, i, "p", &args->port)) ||
+                   (arg_adv = ReadArg(argc, argv, i, "port", &args->port))) {
             i += arg_adv;
-        } else if ((arg_adv = ReadArg(argc, argv, i, "r", &context->root)) ||
-                   (arg_adv = ReadArg(argc, argv, i, "root", &context->root))) {
+        } else if ((arg_adv = ReadArg(argc, argv, i, "r", &args->root)) ||
+                   (arg_adv = ReadArg(argc, argv, i, "root", &args->root))) {
             i += arg_adv;
         } else {
             Fatal("unknown command line option: %s", argv[i]);

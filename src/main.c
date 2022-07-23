@@ -12,9 +12,20 @@
 
 #include "chttpd.h"
 #include "cmdline.h"
-#include "context.h"
 #include "errors.h"
 #include "socket.h"
+
+static void BuildContext(Context *context, const Args *args) {
+    if (args->host != NULL) {
+        context->host = args->host;
+    }
+    if (args->port != NULL) {
+        context->port = args->port;
+    }
+    if (args->root != NULL) {
+        context->root = args->root;
+    }
+}
 
 static void SigchldHandler(int arg) {
     int saved_errno = errno;
@@ -38,16 +49,17 @@ static int InstallSignalHandler() {
     return 0;
 }
 
-static int Initialize(const char *port) {
+static int Initialize(Context *context) {
     struct addrinfo hints = {.ai_flags = AI_PASSIVE,
                              .ai_family = AF_UNSPEC,
                              .ai_socktype = SOCK_STREAM};
     struct addrinfo *addr_info_head;
 
     {
-        int gai_status = getaddrinfo(NULL, port, &hints, &addr_info_head);
+        int gai_status =
+            getaddrinfo(NULL, context->port, &hints, &addr_info_head);
         if (gai_status != 0) {
-            Fatal("failed to get info for port %s: %s", port,
+            Fatal("failed to get info for port %s: %s", context->port,
                   gai_strerror(gai_status));
         }
     }
@@ -96,16 +108,26 @@ static int Initialize(const char *port) {
 }
 
 int main(int argc, char **argv) {
-    Context *context = GetContext();
-
-    ParseArguments(argc - 1, argv + 1, context);
-    if (context->help) {
+    Args args = {
+        .help = false,
+        .host = NULL,
+        .port = NULL,
+        .root = NULL,
+    };
+    ParseArgs(argc - 1, argv + 1, &args);
+    if (args.help) {
         Usage(stdout);
         exit(EXIT_SUCCESS);
     }
 
-    int s = Initialize(context->port);
-    printf("Listening at port %s...\n", context->port);
+    Context context = {
+        .host = "localhost",
+        .port = "80",
+        .root = ".",
+    };
+    BuildContext(&context, &args);
+    int s = Initialize(&context);
+    printf("Listening at port %s...\n", context.port);
 
     for (;;) {
         struct sockaddr_storage from_addr_storage;
@@ -126,7 +148,7 @@ int main(int argc, char **argv) {
         }
         if (child_pid == 0) {
             close(s);
-            ServeRequest(context, connection, &from_addr);
+            ServeRequest(&context, connection, &from_addr);
             close(connection);
             exit(EXIT_SUCCESS);
         } else {

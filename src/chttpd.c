@@ -10,7 +10,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "context.h"
 #include "datetime.h"
 #include "errors.h"
 #include "http.h"
