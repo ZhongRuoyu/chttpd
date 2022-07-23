@@ -101,23 +101,7 @@ static int Initialize(const char *port) {
 int main(int argc, char **argv) {
     Context *context = GetContext();
 
-    int optind = ParseArguments(argc, argv, context);
-    if (optind == -1) {
-        Usage(stderr);
-        exit(EXIT_FAILURE);
-    }
-    argc -= optind;
-    argv += optind;
-    if (argc > 0) {
-        fprintf(stderr,
-                "unknown command line argument%s:", argc > 1 ? "s" : "");
-        for (int i = 0; i < argc; ++i) {
-            fprintf(stderr, " %s", argv[i]);
-        }
-        fprintf(stderr, "\n");
-        Usage(stderr);
-        exit(EXIT_FAILURE);
-    }
+    ParseArguments(argc - 1, argv + 1, context);
     if (context->help) {
         Usage(stdout);
         exit(EXIT_SUCCESS);

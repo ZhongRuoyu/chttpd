@@ -7,6 +7,6 @@
 
 void Usage(FILE *out);
 
-int ParseArguments(int argc, char **argv, Context *context);
+void ParseArguments(int argc, char **argv, Context *context);
 
 #endif  // CHTTPD_CMDLINE_H_
