@@ -35,7 +35,6 @@ size_t GetLineFromConnection(int connection, char *buffer, size_t buffer_size) {
     if (buffer_size == 0) {
         return 0;
     }
-    char ch;
     size_t bytes_read = 0;
     for (char ch; bytes_read + 1 < buffer_size; ++bytes_read) {
         ssize_t n = recv(connection, &ch, 1, 0);
