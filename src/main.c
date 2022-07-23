@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
     }
 
     Context context = {
-        .host = "localhost",
+        .host = NULL,
         .port = "80",
         .root = ".",
         .server = NULL,

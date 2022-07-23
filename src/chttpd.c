@@ -114,7 +114,7 @@ int ServeRequest(const Context *context, int connection,
             }
         }
     }
-    if (http_version == kHTTP_1_1) {
+    if (http_version == kHTTP_1_1 && context->host != NULL) {
         if (strnlen(uri_host, sizeof uri_host) == 0) {
             ErrorResponse(context, connection, kBadRequest);
             return 1;

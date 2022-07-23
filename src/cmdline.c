@@ -20,7 +20,7 @@ void Usage(FILE *out) {
         "options:\n"
         "  --help                Report usage information\n"
         "  -v, --version         Report version information\n"
-        "  -h HOST, --host HOST  Set hostname (default: localhost)\n"
+        "  -h HOST, --host HOST  Serve only requests to HOST\n"
         "  -p PORT, --port PORT  Set port number to listen to (default: 80)\n"
         "  -r ROOT, --root ROOT  Set root directory to serve (default: .)\n"
         "  --server SERVER       Set server name to show in response header\n"
