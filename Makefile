@@ -25,6 +25,9 @@ chttpd: $(OBJS)
 	mkdir -p $(@D)
 	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS)
 
+chttpd-asan: $(OBJS)
+	$(MAKE) CFLAGS="-fsanitize=address -O0 -g -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" chttpd
+
 out/%.o: src/%.c
 	mkdir -p $(@D)
 	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
