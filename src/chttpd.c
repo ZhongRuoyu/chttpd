@@ -11,6 +11,7 @@
 #include <sys/types.h>
 
 #include "datetime.h"
+#include "files.h"
 #include "http.h"
 #include "log.h"
 #include "socket.h"
@@ -209,20 +210,10 @@ static int ServeFile(const Context *context, int connection, const char *path) {
     send(connection, buffer, strlen(buffer), 0);
 
     const char *file_extension = strrchr(path, '.');
-    if (file_extension != NULL) {
-        const char *content_type = NULL;
-        if (strcasecmp(file_extension, ".css") == 0) {
-            content_type = "text/css";
-        } else if (strcasecmp(file_extension, ".html") == 0) {
-            content_type = "text/html";
-        } else if (strcasecmp(file_extension, ".js") == 0) {
-            content_type = "text/javascript";
-        }
-        if (content_type != NULL) {
-            snprintf(buffer, sizeof buffer, "Content-Type: %s\r\n",
-                     content_type);
-            send(connection, buffer, strlen(buffer), 0);
-        }
+    const char *content_type = GetContentType(file_extension);
+    if (content_type != NULL) {
+        snprintf(buffer, sizeof buffer, "Content-Type: %s\r\n", content_type);
+        send(connection, buffer, strlen(buffer), 0);
     }
 
     snprintf(buffer, sizeof buffer, "\r\n");
