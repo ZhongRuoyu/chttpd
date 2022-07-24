@@ -12,7 +12,7 @@ typedef struct {
 
 SocketAddress GetSocketAddress(const struct sockaddr_storage *addr_storage);
 
-size_t GetLineFromConnection(int connection, char *buffer, size_t buffer_size);
+char *GetLineFromConnection(int connection, size_t *line_length);
 
 int SendFile(int connection, FILE *file);
 

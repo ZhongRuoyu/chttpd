@@ -1,7 +1,28 @@
 #include "strings.h"
 
 #include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "log.h"
+
+char *Format(const char *format, ...) {
+    char *buffer;
+    size_t buffer_size;
+    FILE *buffer_memstream = open_memstream(&buffer, &buffer_size);
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(buffer_memstream, format, args);
+    va_end(args);
+    putc('\0', buffer_memstream);
+
+    fclose(buffer_memstream);
+    return buffer;
+}
 
 size_t CopyString(char *dest, const char *src, size_t count) {
     if (count == 0) {
@@ -16,32 +37,46 @@ size_t CopyString(char *dest, const char *src, size_t count) {
     return bytes_copied;
 }
 
-size_t TrimString(char *dest, const char *src, size_t count) {
-    if (count == 0) {
-        return 0;
+char *TrimString(const char *str, size_t *trimmed_length) {
+    char *buffer;
+    size_t buffer_size;
+    FILE *buffer_memstream = open_memstream(&buffer, &buffer_size);
+    if (buffer_memstream == NULL) {
+        return NULL;
     }
-    size_t bytes_read = 0;
-    size_t bytes_copied = 0;
-    size_t last_non_space = -1;
-    while (src[bytes_read] != '\0' && bytes_copied + 1 < count) {
-        if (!isspace(src[bytes_read])) {
-            dest[bytes_copied] = src[bytes_read];
-            last_non_space = bytes_copied;
-            ++bytes_copied;
-        }
-        ++bytes_read;
+
+    size_t i = 0;
+    while (str[i] != '\0' && isspace(str[i])) {
+        ++i;
     }
-    dest[bytes_copied] = '\0';
-    return bytes_copied;
+    while (str[i] != '\0' && !isspace(str[i])) {
+        putc(str[i++], buffer_memstream);
+    }
+    putc('\0', buffer_memstream);
+
+    fclose(buffer_memstream);
+    if (trimmed_length != NULL) {
+        *trimmed_length = buffer_size - 1;
+    }
+    return buffer;
 }
 
-size_t GetNextToken(const char *str, char *buffer, size_t buffer_size) {
-    size_t p = 0;
-    size_t token_length = 0;
-    while (token_length + 1 < buffer_size && str[p] != '\0' &&
-           !isspace(str[p])) {
-        buffer[token_length++] = str[p++];
+char *GetNextToken(const char *str, size_t *token_length) {
+    char *buffer;
+    size_t buffer_size;
+    FILE *buffer_memstream = open_memstream(&buffer, &buffer_size);
+    if (buffer_memstream == NULL) {
+        return NULL;
     }
-    buffer[token_length] = '\0';
-    return token_length;
+
+    for (size_t i = 0; str[i] != '\0' && !isspace(str[i]); ++i) {
+        putc(str[i], buffer_memstream);
+    }
+    putc('\0', buffer_memstream);
+
+    fclose(buffer_memstream);
+    if (token_length != NULL) {
+        *token_length = buffer_size - 1;
+    }
+    return buffer;
 }

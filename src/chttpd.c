@@ -17,6 +17,9 @@
 #include "socket.h"
 #include "strings.h"
 
+static int ProcessRequestLine(const Context *context, int connection,
+                              char *request_line, RequestMethod *request_method,
+                              char **uri, HTTPVersion *http_version);
 static size_t GetCommonHeader(const Context *context, char *buffer,
                               size_t buffer_size);
 static int ServeFile(const Context *context, int connection, const char *path);
@@ -27,157 +30,187 @@ static void ErrorResponse(const Context *context, int connection,
 
 int ServeRequest(const Context *context, int connection,
                  const SocketAddress *from_addr) {
-    char request_line[BUFFER_SIZE];
-    size_t request_line_length =
-        GetLineFromConnection(connection, request_line, sizeof request_line);
-
-    char method_string[TOKEN_BUFFER_SIZE];
-    char uri[URI_BUFFER_SIZE];
-    char http_version_string[TOKEN_BUFFER_SIZE];
-    {
-        size_t p_request_line = 0;
-
-        size_t method_length = GetNextToken(
-            request_line + p_request_line, method_string, sizeof method_string);
-        p_request_line += method_length;
-        if (method_length == 0) {
-            ErrorResponse(context, connection, kBadRequest);
-            return 1;
-        }
-
-        if (isspace(request_line[p_request_line])) {
-            ++p_request_line;
-        } else {
-            ErrorResponse(context, connection, kBadRequest);
-            return 1;
-        }
-
-        size_t uri_length =
-            GetNextToken(request_line + p_request_line, uri, sizeof uri);
-        p_request_line += uri_length;
-        if (uri_length == 0) {
-            ErrorResponse(context, connection, kBadRequest);
-            return 1;
-        }
-
-        if (isspace(request_line[p_request_line])) {
-            ++p_request_line;
-        } else {
-            ErrorResponse(context, connection, kBadRequest);
-            return 1;
-        }
-
-        size_t http_version_length =
-            GetNextToken(request_line + p_request_line, http_version_string,
-                         sizeof http_version_string);
-        p_request_line += http_version_length;
-        if (http_version_length == 0) {
-            ErrorResponse(context, connection, kBadRequest);
-            return 1;
-        }
-
-        if (strlen(request_line + p_request_line) > 0) {
-            ErrorResponse(context, connection, kBadRequest);
-            return 1;
-        }
-    }
-
-    HTTPVersion http_version = GetHTTPVersion(http_version_string);
-    if (http_version == 0) {
-        ErrorResponse(context, connection, kBadRequest);
+    size_t request_line_size;
+    char *request_line = GetLineFromConnection(connection, &request_line_size);
+    if (request_line == NULL) {
+        Warning("failed to process request line: %s", strerror(errno));
+        ErrorResponse(context, connection, kInternalServerError);
         return 1;
     }
+
+    RequestMethod request_method;
+    char *uri;
+    HTTPVersion http_version;
+    int process_request_line_result =
+        ProcessRequestLine(context, connection, request_line, &request_method,
+                           &uri, &http_version);
+    if (process_request_line_result != 0) {
+        free(request_line);
+        return 1;
+    }
+
     switch (http_version) {
         case kHTTP_1_0:
         case kHTTP_1_1:
             break;
         default:
             ErrorResponse(context, connection, kHTTPVersionNotSupported);
+            free(uri);
             return 1;
     }
 
-    char buffer[BUFFER_SIZE];
-    size_t bytes_read = 0;
-    char uri_host[LINE_BUFFER_SIZE] = "";
-    char uri_port[TOKEN_BUFFER_SIZE] = "";
-    while ((bytes_read =
-                GetLineFromConnection(connection, buffer, sizeof buffer)) > 0) {
-        if (strncasecmp("Host:", buffer, strlen("Host:")) == 0) {
-            if (strnlen(uri_host, sizeof uri_host) > 0) {
-                ErrorResponse(context, connection, kBadRequest);
-                return 1;
-            }
-            TrimString(uri_host, buffer + strlen("Host:"), sizeof uri_host);
-            char *port_seperator = strchr(uri_host, ':');
-            if (port_seperator != NULL) {
-                *port_seperator = '\0';
-                CopyString(uri_port, port_seperator + 1, sizeof uri_port);
-            }
-        }
-    }
-    if (http_version == kHTTP_1_1 && context->host != NULL) {
-        if (strnlen(uri_host, sizeof uri_host) == 0) {
-            ErrorResponse(context, connection, kBadRequest);
+    char *host_line = NULL;
+    for (;;) {
+        size_t field_line_length = 0;
+        char *field_line =
+            GetLineFromConnection(connection, &field_line_length);
+        if (field_line == NULL) {
+            Warning("failed to process field lines: %s", strerror(errno));
+            ErrorResponse(context, connection, kInternalServerError);
+            free(uri);
             return 1;
+        }
+        if (field_line_length == 0) {
+            break;
+        }
+        if (strncasecmp("Host:", field_line, strlen("Host:")) == 0) {
+            host_line = field_line;
         } else {
-            if (strncmp(uri_host, context->host, sizeof uri_host) != 0 ||
-                strnlen(uri_port, sizeof uri_port) > 0 &&
-                    strncmp(uri_port, context->port, sizeof uri_port) != 0) {
-                return 1;
-            }
+            free(field_line);
         }
     }
 
-    RequestMethod request_method = GetRequestMethod(method_string);
-    if (request_method == 0) {
-        ErrorResponse(context, connection, kBadRequest);
-        return 1;
+    if (host_line != NULL) {
+        char *host_line_host = TrimString(host_line + strlen("Host:"), NULL);
+        char *host_line_port = NULL;
+        free(host_line);
+        char *port_seperator = strchr(host_line_host, ':');
+        if (port_seperator != NULL) {
+            *port_seperator = '\0';
+            host_line_port = port_seperator + 1;
+        }
+        if (http_version == kHTTP_1_1 && context->host != NULL) {
+            if (strcmp(host_line, context->host) != 0 ||
+                host_line_port != NULL &&
+                    strcmp(host_line_port, context->port) != 0) {
+                free(uri);
+                free(host_line_host);
+                return 1;
+            }
+        }
+        free(host_line_host);
+    } else {
+        if (http_version == kHTTP_1_1) {
+            free(uri);
+            return 1;
+        }
     }
 
     LogRequestLine(from_addr, request_line);
     switch (request_method) {
         case kGET: {
-            {
-                char *query_string = strchr(uri, '?');
-                if (query_string != NULL) {
-                    *query_string = '\0';
-                }
+            char *query_string = strchr(uri, '?');
+            if (query_string != NULL) {
+                *query_string = '\0';
+                ++query_string;
             }
-            char path[BUFFER_SIZE];
-            size_t path_length = 0;
-            {
-                size_t root_length = strlen(context->root);
-                if (root_length + 1 >= sizeof path) {
-                    ErrorResponse(context, connection, kURITooLong);
-                    return 1;
-                }
-                CopyString(path, context->root, sizeof path);
-                CopyString(path + root_length, uri, sizeof path - root_length);
-                path_length = strnlen(path, sizeof path);
-                if (path_length == sizeof path) {
-                    ErrorResponse(context, connection, kURITooLong);
-                    return 1;
-                }
-                if (path[path_length - 1] == '/') {
-                    if (path_length + strlen("index.html") + 1 > sizeof path) {
-                        ErrorResponse(context, connection, kURITooLong);
-                        return 1;
-                    }
-                    CopyString(path + path_length, "index.html",
-                               sizeof path - path_length);
-                    path_length += strlen("index.html");
-                }
+            char *path = Format("%s%s", context->root, uri);
+            free(uri);
+            if (path[strlen(path) - 1] == '/') {
+                char *concatenated = Format("%sindex.html", path);
+                free(path);
+                path = concatenated;
             }
-            return ServeFile(context, connection, path);
+            int serve_result = ServeFile(context, connection, path);
+            free(path);
+            return serve_result;
         }
         default: {
-            ErrorResponse(context, connection, kNotImplemented);
+            ErrorResponse(context, connection, kBadRequest);
+            free(uri);
             return 1;
         }
     }
+}
 
-    ErrorResponse(context, connection, kNotImplemented);
-    return 1;
+static int ProcessRequestLine(const Context *context, int connection,
+                              char *request_line, RequestMethod *request_method,
+                              char **uri, HTTPVersion *http_version) {
+    size_t request_method_string_length;
+    char *request_method_string =
+        GetNextToken(request_line, &request_method_string_length);
+    if (request_method_string == NULL) {
+        Warning("failed to process request method: %s", strerror(errno));
+        ErrorResponse(context, connection, kInternalServerError);
+        return 1;
+    }
+    if (request_method_string_length == 0) {
+        ErrorResponse(context, connection, kBadRequest);
+        return 1;
+    }
+    *request_method = GetRequestMethod(request_method_string);
+    free(request_method_string);
+    if (*request_method == 0) {
+        ErrorResponse(context, connection, kBadRequest);
+        return 1;
+    }
+
+    if (!isspace(request_line[request_method_string_length])) {
+        ErrorResponse(context, connection, kBadRequest);
+        return 1;
+    }
+
+    size_t uri_length;
+    *uri = GetNextToken(request_line + request_method_string_length + 1,
+                        &uri_length);
+    if (uri == NULL) {
+        Warning("failed to process URI: %s", strerror(errno));
+        ErrorResponse(context, connection, kInternalServerError);
+        return 1;
+    }
+    if (uri_length == 0) {
+        ErrorResponse(context, connection, kBadRequest);
+        free(*uri);
+        return 1;
+    }
+
+    if (!isspace(request_line[request_method_string_length + 1 + uri_length])) {
+        ErrorResponse(context, connection, kBadRequest);
+        free(*uri);
+        return 1;
+    }
+
+    size_t http_version_string_length;
+    char *http_version_string = GetNextToken(
+        request_line + request_method_string_length + 1 + uri_length + 1,
+        &http_version_string_length);
+    if (uri == NULL) {
+        Warning("failed to process HTTP version: %s", strerror(errno));
+        ErrorResponse(context, connection, kInternalServerError);
+        free(*uri);
+        return 1;
+    }
+    if (http_version_string_length == 0) {
+        ErrorResponse(context, connection, kBadRequest);
+        free(*uri);
+        return 1;
+    }
+    *http_version = GetHTTPVersion(http_version_string);
+    free(http_version_string);
+    if (*http_version == 0) {
+        ErrorResponse(context, connection, kBadRequest);
+        free(*uri);
+        return 1;
+    }
+
+    if (request_line[request_method_string_length + 1 + uri_length + 1 +
+                     http_version_string_length] != '\0') {
+        ErrorResponse(context, connection, kBadRequest);
+        free(*uri);
+        return 1;
+    }
+
+    return 0;
 }
 
 static size_t GetCommonHeader(const Context *context, char *buffer,

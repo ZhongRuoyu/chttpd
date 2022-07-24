@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
@@ -31,12 +32,15 @@ SocketAddress GetSocketAddress(const struct sockaddr_storage *addr_storage) {
     return socket_address;
 }
 
-size_t GetLineFromConnection(int connection, char *buffer, size_t buffer_size) {
-    if (buffer_size == 0) {
-        return 0;
+char *GetLineFromConnection(int connection, size_t *line_length) {
+    char *buffer;
+    size_t buffer_size;
+    FILE *buffer_memstream = open_memstream(&buffer, &buffer_size);
+    if (buffer_memstream == NULL) {
+        return NULL;
     }
-    size_t bytes_read = 0;
-    for (char ch; bytes_read + 1 < buffer_size; ++bytes_read) {
+    for (;;) {
+        char ch;
         ssize_t next = recv(connection, &ch, 1, 0);
         if (next <= 0) {
             break;
@@ -49,10 +53,14 @@ size_t GetLineFromConnection(int connection, char *buffer, size_t buffer_size) {
                 break;
             }
         }
-        buffer[bytes_read] = ch;
+        putc(ch, buffer_memstream);
     }
-    buffer[bytes_read] = '\0';
-    return bytes_read;
+    putc('\0', buffer_memstream);
+    fclose(buffer_memstream);
+    if (line_length != NULL) {
+        *line_length = buffer_size - 1;
+    }
+    return buffer;
 }
 
 int SendFile(int connection, FILE *file) {

@@ -3,10 +3,16 @@
 
 #include <stddef.h>
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
+char *Format(const char *format, ...) __attribute__((format(printf, 1, 2)));
+
 size_t CopyString(char *dest, const char *src, size_t count);
 
-size_t TrimString(char *dest, const char *src, size_t count);
+char *TrimString(const char *str, size_t *trimmed_length);
 
-size_t GetNextToken(const char *str, char *buffer, size_t buffer_size);
+char *GetNextToken(const char *str, size_t *token_length);
 
 #endif  // CHTTPD_STRINGS_H_

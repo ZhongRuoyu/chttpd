@@ -7,10 +7,7 @@
 
 #define BACKLOG SOMAXCONN
 
-#define BUFFER_SIZE 16384
-#define TOKEN_BUFFER_SIZE 256
-#define LINE_BUFFER_SIZE 1024
-#define URI_BUFFER_SIZE 8192
+#define BUFFER_SIZE 4096
 
 typedef struct {
     const char *host;
