@@ -73,6 +73,7 @@ int ServeRequest(const Context *context, int connection,
             return 1;
         }
         if (field_line_length == 0) {
+            free(field_line);
             break;
         }
         if (strncasecmp("Host:", field_line, strlen("Host:")) == 0) {
