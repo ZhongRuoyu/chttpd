@@ -7,6 +7,11 @@ on:
 
 jobs:
   build-clang:
+    strategy:
+      matrix:
+        target:
+          - chttpd
+          - chttpd-asan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,8 +21,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential clang
       - name: Build
-        run: make -j$(nproc) CC=clang
+        run: make -j$(nproc) CC=clang ${{ matrix.target }}
   build-gcc:
+    strategy:
+      matrix:
+        target:
+          - chttpd
+          - chttpd-asan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,11 +37,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
       - name: Build
-        run: make -j$(nproc) CC=gcc
+        run: make -j$(nproc) CC=gcc ${{ matrix.target }}
   build-macos:
+    strategy:
+      matrix:
+        target:
+          - chttpd
+          - chttpd-asan
     runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
-        run: make -j$(sysctl -n hw.logicalcpu)
+        run: make -j$(sysctl -n hw.logicalcpu) ${{ matrix.target }}
