@@ -48,6 +48,8 @@ int ServeRequest(const Context *context, int connection,
         free(request_line);
         return 1;
     }
+    LogRequestLine(from_addr, request_line);
+    free(request_line);
 
     switch (http_version) {
         case kHTTP_1_0:
@@ -106,7 +108,6 @@ int ServeRequest(const Context *context, int connection,
         }
     }
 
-    LogRequestLine(from_addr, request_line);
     switch (request_method) {
         case kGET: {
             char *query_string = strchr(uri, '?');
