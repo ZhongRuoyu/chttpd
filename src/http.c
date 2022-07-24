@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *kHTTPVersions[] = {
+static const char *const kHTTPVersions[] = {
     "", "HTTP/0.9", "HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3",
 };
 
@@ -25,7 +25,7 @@ const char *GetHTTPVersionString(HTTPVersion http_version) {
     return kHTTPVersions[http_version];
 }
 
-static const char *kRequestMethods[] = {
+static const char *const kRequestMethods[] = {
     "",       "GET",     "HEAD",    "POST",  "PUT",
     "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH",
 };

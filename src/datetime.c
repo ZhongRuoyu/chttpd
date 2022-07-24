@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <time.h>
 
-static const char *kWeekdays[] = {"Sun", "Mon", "Tue", "Wed",
-                                  "Thu", "Fri", "Sat"};
+static const char *const kWeekdays[] = {"Sun", "Mon", "Tue", "Wed",
+                                        "Thu", "Fri", "Sat"};
 
-static const char *kMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char *const kMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 int GetDateHeader(char *buffer, size_t buffer_size) {
     time_t t = time(NULL);
