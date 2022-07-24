@@ -20,13 +20,12 @@
 static int ProcessRequestLine(const Context *context, int connection,
                               char *request_line, RequestMethod *request_method,
                               char **uri, HTTPVersion *http_version);
-static size_t GetCommonHeader(const Context *context, char *buffer,
-                              size_t buffer_size);
+static char *GetCommonHeader(const Context *context);
 static int ServeFile(const Context *context, int connection, const char *path);
-static void SuccessResponse(const Context *context, int connection,
-                            ResponseStatusCode code);
-static void ErrorResponse(const Context *context, int connection,
-                          ResponseStatusCode code);
+static int SuccessResponseCommonHeader(const Context *context, int connection,
+                                       ResponseStatusCode response_status_code);
+static int ErrorResponse(const Context *context, int connection,
+                         ResponseStatusCode response_status_code);
 
 int ServeRequest(const Context *context, int connection,
                  const SocketAddress *from_addr) {
@@ -34,17 +33,17 @@ int ServeRequest(const Context *context, int connection,
     char *request_line = GetLineFromConnection(connection, &request_line_size);
     if (request_line == NULL) {
         Warning("failed to process request line: %s", strerror(errno));
-        ErrorResponse(context, connection, kInternalServerError);
+        if (ErrorResponse(context, connection, kInternalServerError) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
 
     RequestMethod request_method;
     char *uri;
     HTTPVersion http_version;
-    int process_request_line_result =
-        ProcessRequestLine(context, connection, request_line, &request_method,
-                           &uri, &http_version);
-    if (process_request_line_result != 0) {
+    if (ProcessRequestLine(context, connection, request_line, &request_method,
+                           &uri, &http_version) != 0) {
         free(request_line);
         return 1;
     }
@@ -56,7 +55,10 @@ int ServeRequest(const Context *context, int connection,
         case kHTTP_1_1:
             break;
         default:
-            ErrorResponse(context, connection, kHTTPVersionNotSupported);
+            if (ErrorResponse(context, connection, kHTTPVersionNotSupported) !=
+                0) {
+                Warning("failed to send response: %s\n", strerror(errno));
+            }
             free(uri);
             return 1;
     }
@@ -68,7 +70,9 @@ int ServeRequest(const Context *context, int connection,
             GetLineFromConnection(connection, &field_line_length);
         if (field_line == NULL) {
             Warning("failed to process field lines: %s", strerror(errno));
-            ErrorResponse(context, connection, kInternalServerError);
+            if (ErrorResponse(context, connection, kInternalServerError) != 0) {
+                Warning("failed to send response: %s\n", strerror(errno));
+            }
             free(uri);
             return 1;
         }
@@ -119,7 +123,10 @@ int ServeRequest(const Context *context, int connection,
             char *path = Format("%s%s", context->root, uri);
             if (path == NULL) {
                 Warning("failed to process request path: %s", strerror(errno));
-                ErrorResponse(context, connection, kInternalServerError);
+                if (ErrorResponse(context, connection, kInternalServerError) !=
+                    0) {
+                    Warning("failed to send response: %s\n", strerror(errno));
+                }
                 free(uri);
                 return 1;
             }
@@ -129,7 +136,11 @@ int ServeRequest(const Context *context, int connection,
                 if (concatenated == NULL) {
                     Warning("failed to process request path: %s",
                             strerror(errno));
-                    ErrorResponse(context, connection, kInternalServerError);
+                    if (ErrorResponse(context, connection,
+                                      kInternalServerError) != 0) {
+                        Warning("failed to send response: %s\n",
+                                strerror(errno));
+                    }
                     free(uri);
                     return 1;
                 }
@@ -141,7 +152,9 @@ int ServeRequest(const Context *context, int connection,
             return serve_result;
         }
         default: {
-            ErrorResponse(context, connection, kBadRequest);
+            if (ErrorResponse(context, connection, kBadRequest) != 0) {
+                Warning("failed to send response: %s\n", strerror(errno));
+            }
             free(uri);
             return 1;
         }
@@ -156,22 +169,30 @@ static int ProcessRequestLine(const Context *context, int connection,
         GetNextToken(request_line, &request_method_string_length);
     if (request_method_string == NULL) {
         Warning("failed to process request method: %s", strerror(errno));
-        ErrorResponse(context, connection, kInternalServerError);
+        if (ErrorResponse(context, connection, kInternalServerError) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
     if (request_method_string_length == 0) {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
     *request_method = GetRequestMethod(request_method_string);
     free(request_method_string);
     if (*request_method == 0) {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
 
     if (!isspace(request_line[request_method_string_length])) {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
 
@@ -180,17 +201,23 @@ static int ProcessRequestLine(const Context *context, int connection,
                         &uri_length);
     if (uri == NULL) {
         Warning("failed to process URI: %s", strerror(errno));
-        ErrorResponse(context, connection, kInternalServerError);
+        if (ErrorResponse(context, connection, kInternalServerError) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
     if (uri_length == 0) {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         free(*uri);
         return 1;
     }
 
     if (!isspace(request_line[request_method_string_length + 1 + uri_length])) {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         free(*uri);
         return 1;
     }
@@ -201,26 +228,35 @@ static int ProcessRequestLine(const Context *context, int connection,
         &http_version_string_length);
     if (uri == NULL) {
         Warning("failed to process HTTP version: %s", strerror(errno));
-        ErrorResponse(context, connection, kInternalServerError);
+        if (ErrorResponse(context, connection, kInternalServerError) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         free(*uri);
         return 1;
     }
     if (http_version_string_length == 0) {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         free(*uri);
         return 1;
     }
     *http_version = GetHTTPVersion(http_version_string);
     free(http_version_string);
     if (*http_version == 0) {
-        ErrorResponse(context, connection, kBadRequest);
+        Warning("failed to process URI: %s", strerror(errno));
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         free(*uri);
         return 1;
     }
 
     if (request_line[request_method_string_length + 1 + uri_length + 1 +
                      http_version_string_length] != '\0') {
-        ErrorResponse(context, connection, kBadRequest);
+        if (ErrorResponse(context, connection, kBadRequest) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         free(*uri);
         return 1;
     }
@@ -228,73 +264,109 @@ static int ProcessRequestLine(const Context *context, int connection,
     return 0;
 }
 
-static size_t GetCommonHeader(const Context *context, char *buffer,
-                              size_t buffer_size) {
-    size_t n = 0;
-    if (n < buffer_size) {
-        n += GetDateHeader(buffer + n, buffer_size - n);
+static char *GetCommonHeader(const Context *context) {
+    char *date_header = GetDateHeader();
+    if (date_header == NULL) {
+        return NULL;
     }
-    if (n < buffer_size) {
-        n += snprintf(buffer + n, buffer_size - n, "Server: %s\r\n",
-                      context->server);
+    char *result = Format(
+        "%s"
+        "Server: %s\r\n",
+        date_header, context->server);
+    free(date_header);
+    if (result == NULL) {
+        return NULL;
     }
-    return n;
+    return result;
 }
 
 static int ServeFile(const Context *context, int connection, const char *path) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
-        ErrorResponse(context, connection, kNotFound);
+        if (ErrorResponse(context, connection, kNotFound) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+        }
         return 1;
     }
-    SuccessResponse(context, connection, kOK);
-
-    char buffer[BUFFER_SIZE];
+    if (SuccessResponseCommonHeader(context, connection, kOK) != 0) {
+        Warning("failed to send response: %s\n", strerror(errno));
+        return 1;
+    }
 
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     rewind(file);
-    snprintf(buffer, sizeof buffer, "Content-Length: %ld\r\n", file_size);
-    send(connection, buffer, strlen(buffer), 0);
+    if (SendToConnection(connection, "Content-Length: %ld\r\n", file_size) !=
+        0) {
+        Warning("failed to send response: %s\n", strerror(errno));
+        return 1;
+    }
 
     const char *file_extension = strrchr(path, '.');
     const char *content_type = GetContentType(file_extension);
     if (content_type != NULL) {
-        snprintf(buffer, sizeof buffer, "Content-Type: %s\r\n", content_type);
-        send(connection, buffer, strlen(buffer), 0);
+        if (SendToConnection(connection, "Content-Type: %s\r\n",
+                             content_type) != 0) {
+            Warning("failed to send response: %s\n", strerror(errno));
+            return 1;
+        }
     }
 
-    snprintf(buffer, sizeof buffer, "\r\n");
-    send(connection, buffer, strlen(buffer), 0);
+    if (SendToConnection(connection, "\r\n") != 0) {
+        Warning("failed to send response: %s\n", strerror(errno));
+        return 1;
+    }
 
-    int send_file_error = SendFile(connection, file);
-    if (send_file_error != 0) {
+    if (SendFile(connection, file) != 0) {
         Warning("failed to send response: %s", strerror(errno));
-        return send_file_error;
+        return 1;
     }
+
     return 0;
 }
 
-static void SuccessResponse(const Context *context, int connection,
-                            ResponseStatusCode code) {
-    char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof buffer, "%s %s\r\n",
-             GetHTTPVersionString(kHTTP_1_1), GetResponseStatusString(code));
-    send(connection, buffer, strlen(buffer), 0);
-    GetCommonHeader(context, buffer, sizeof buffer);
-    send(connection, buffer, strlen(buffer), 0);
+static int SuccessResponseCommonHeader(
+    const Context *context, int connection,
+    ResponseStatusCode response_status_code) {
+    if (SendToConnection(connection, "%s %s\r\n",
+                         GetHTTPVersionString(kHTTP_1_1),
+                         GetResponseStatusString(response_status_code)) != 0) {
+        return 1;
+    }
+    char *common_header = GetCommonHeader(context);
+    if (common_header == NULL) {
+        return 1;
+    }
+    if (SendToConnection(connection, "%s", common_header) != 0) {
+        free(common_header);
+        return 1;
+    }
+    free(common_header);
+    return 0;
 }
 
-static void ErrorResponse(const Context *context, int connection,
-                          ResponseStatusCode code) {
-    char buffer[BUFFER_SIZE];
-    snprintf(buffer, sizeof buffer, "%s %s\r\n",
-             GetHTTPVersionString(kHTTP_1_1), GetResponseStatusString(code));
-    send(connection, buffer, strlen(buffer), 0);
-    GetCommonHeader(context, buffer, sizeof buffer);
-    send(connection, buffer, strlen(buffer), 0);
-    snprintf(buffer, sizeof buffer, "\r\n");
-    send(connection, buffer, strlen(buffer), 0);
-    snprintf(buffer, sizeof buffer, "%s\n", GetResponseStatusString(code));
-    send(connection, buffer, strlen(buffer), 0);
+static int ErrorResponse(const Context *context, int connection,
+                         ResponseStatusCode response_status_code) {
+    if (SendToConnection(connection, "%s %s\r\n",
+                         GetHTTPVersionString(kHTTP_1_1),
+                         GetResponseStatusString(response_status_code)) != 0) {
+        return 1;
+    }
+    char *common_header = GetCommonHeader(context);
+    if (common_header == NULL) {
+        return 1;
+    }
+    if (SendToConnection(connection, "%s", common_header) != 0) {
+        free(common_header);
+        return 1;
+    }
+    free(common_header);
+    if (SendToConnection(connection, "\r\n") != 0) {
+        return 1;
+    }
+    if (SendToConnection(connection, "%s\n",
+                         GetResponseStatusString(response_status_code)) != 0) {
+        return 1;
+    }
+    return 0;
 }

@@ -7,8 +7,6 @@
 
 #define BACKLOG SOMAXCONN
 
-#define BUFFER_SIZE 4096
-
 typedef struct {
     const char *host;
     const char *index;

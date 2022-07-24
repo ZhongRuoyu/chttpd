@@ -5,6 +5,6 @@
 
 #define DATE_HEADER_BUFFER_SIZE 36
 
-int GetDateHeader(char *buffer, size_t buffer_size);
+char *GetDateHeader();
 
 #endif  // CHTTPD_DATETIME_H_

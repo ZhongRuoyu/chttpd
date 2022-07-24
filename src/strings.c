@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "log.h"
@@ -82,6 +83,25 @@ char *GetNextToken(const char *str, size_t *token_length) {
         *token_length = buffer_size - 1;
     }
     return buffer;
+}
+
+int SendToConnection(int connection, const char *format, ...) {
+    char *buffer;
+    size_t buffer_size;
+    FILE *buffer_memstream = open_memstream(&buffer, &buffer_size);
+    if (buffer_memstream == NULL) {
+        return 1;
+    }
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(buffer_memstream, format, args);
+    va_end(args);
+
+    fclose(buffer_memstream);
+    send(connection, buffer, buffer_size, 0);
+    free(buffer);
+    return 0;
 }
 
 char *GetLineFromConnection(int connection, size_t *line_length) {
