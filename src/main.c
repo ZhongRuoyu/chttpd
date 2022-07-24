@@ -19,6 +19,9 @@ static void BuildContext(Context *context, const Args *args) {
     if (args->host != NULL) {
         context->host = args->host;
     }
+    if (args->index != NULL) {
+        context->index = args->index;
+    }
     if (args->port != NULL) {
         context->port = args->port;
     }
@@ -115,6 +118,7 @@ int main(int argc, char **argv) {
         .help = false,
         .version = false,
         .host = NULL,
+        .index = NULL,
         .port = NULL,
         .root = NULL,
         .server = NULL,
@@ -131,6 +135,7 @@ int main(int argc, char **argv) {
 
     Context context = {
         .host = NULL,
+        .index = "index.html",
         .port = "80",
         .root = ".",
         .server = "chttpd",

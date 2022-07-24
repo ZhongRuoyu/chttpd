@@ -8,6 +8,7 @@ typedef struct {
     bool help;
     bool version;
     const char *host;
+    const char *index;
     const char *port;
     const char *root;
     const char *server;

@@ -16,15 +16,17 @@ static const char kVersion[] = "chttpd " CHTTPD_VERSION;
 void Usage(FILE *out) {
     fprintf(
         out,
-        "usage: chttpd [options]\n"
-        "options:\n"
-        "  --help                Report usage information\n"
-        "  -v, --version         Report version information\n"
-        "  -h HOST, --host HOST  Serve only requests to HOST\n"
-        "  -p PORT, --port PORT  Set port number to listen to (default: 80)\n"
-        "  -r ROOT, --root ROOT  Set root directory to serve (default: .)\n"
-        "  --server SERVER       Set server name to show in response header\n"
-        "                          (default: chttpd)\n"
+        "Usage: chttpd [options]\n"
+        "Options:\n"
+        "  --help                    Report usage information\n"
+        "  -v, --version             Report version information\n"
+        "  -h HOST, --host HOST      Serve only requests to HOST\n"
+        "  -i INDEX, --index INDEX   Set index file (default: index.html)\n"
+        "  -p PORT, --port PORT      Set port number to listen to\n"
+        "                              (default: 80)\n"
+        "  -r ROOT, --root ROOT      Set root directory to serve (default: .)\n"
+        "  --server SERVER           Set server name to show in response\n"
+        "                              header (default: chttpd)\n"
         "");
 }
 
@@ -130,6 +132,9 @@ void ParseArgs(int argc, char **argv, Args *args) {
             i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "h", &args->host)) ||
                    (arg_adv = ReadArg(argc, argv, i, "host", &args->host))) {
+            i += arg_adv;
+        } else if ((arg_adv = ReadArg(argc, argv, i, "i", &args->index)) ||
+                   (arg_adv = ReadArg(argc, argv, i, "index", &args->index))) {
             i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "p", &args->port)) ||
                    (arg_adv = ReadArg(argc, argv, i, "port", &args->port))) {

@@ -125,7 +125,7 @@ int ServeRequest(const Context *context, int connection,
             }
             free(uri);
             if (path[strlen(path) - 1] == '/') {
-                char *concatenated = Format("%sindex.html", path);
+                char *concatenated = Format("%s%s", path, context->index);
                 if (concatenated == NULL) {
                     Warning("failed to process request path: %s",
                             strerror(errno));
