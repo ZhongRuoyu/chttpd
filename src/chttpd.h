@@ -19,6 +19,7 @@ typedef struct {
     const char *server;
 } Context;
 
-int ServeRequest(const Context *context, int connection, const SocketAddress *from_addr);
+int ServeRequest(const Context *context, int connection,
+                 const SocketAddress *from_addr);
 
 #endif  // CHTTPD_CHTTPD_H_

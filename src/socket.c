@@ -37,15 +37,15 @@ size_t GetLineFromConnection(int connection, char *buffer, size_t buffer_size) {
     }
     size_t bytes_read = 0;
     for (char ch; bytes_read + 1 < buffer_size; ++bytes_read) {
-        ssize_t n = recv(connection, &ch, 1, 0);
-        if (n <= 0) {
+        ssize_t next = recv(connection, &ch, 1, 0);
+        if (next <= 0) {
             break;
         }
         if (ch == '\r') {
-            char next_ch;
-            ssize_t next = recv(connection, &next_ch, 1, MSG_PEEK);
-            if (next > 0 && next_ch == '\n') {
-                n = recv(connection, &ch, 1, 0);
+            char peek_ch;
+            ssize_t peek_next = recv(connection, &peek_ch, 1, MSG_PEEK);
+            if (peek_next > 0 && peek_ch == '\n') {
+                recv(connection, &ch, 1, 0);
                 break;
             }
         }
