@@ -117,9 +117,22 @@ int ServeRequest(const Context *context, int connection,
                 ++query_string;
             }
             char *path = Format("%s%s", context->root, uri);
+            if (path == NULL) {
+                Warning("failed to process request path: %s", strerror(errno));
+                ErrorResponse(context, connection, kInternalServerError);
+                free(uri);
+                return 1;
+            }
             free(uri);
             if (path[strlen(path) - 1] == '/') {
                 char *concatenated = Format("%sindex.html", path);
+                if (concatenated == NULL) {
+                    Warning("failed to process request path: %s",
+                            strerror(errno));
+                    ErrorResponse(context, connection, kInternalServerError);
+                    free(uri);
+                    return 1;
+                }
                 free(path);
                 path = concatenated;
             }

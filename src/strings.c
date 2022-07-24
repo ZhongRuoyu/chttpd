@@ -13,6 +13,9 @@ char *Format(const char *format, ...) {
     char *buffer;
     size_t buffer_size;
     FILE *buffer_memstream = open_memstream(&buffer, &buffer_size);
+    if (buffer_memstream == NULL) {
+        return NULL;
+    }
 
     va_list args;
     va_start(args, format);
