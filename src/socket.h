@@ -2,7 +2,6 @@
 #define CHTTPD_SOCKET_H_
 
 #include <netinet/in.h>
-#include <stddef.h>
 #include <stdio.h>
 
 typedef struct {
@@ -11,8 +10,6 @@ typedef struct {
 } SocketAddress;
 
 SocketAddress GetSocketAddress(const struct sockaddr_storage *addr_storage);
-
-char *GetLineFromConnection(int connection, size_t *line_length);
 
 int SendFile(int connection, FILE *file);
 
