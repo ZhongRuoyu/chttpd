@@ -1,7 +1,12 @@
 #include "files.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include "chttpd.h"
 
 const char *GetContentType(const char *file_extension) {
     if (file_extension == NULL) {
@@ -16,4 +21,19 @@ const char *GetContentType(const char *file_extension) {
     } else {
         return NULL;
     }
+}
+
+int SendFile(int connection, FILE *file) {
+    char buffer[BUFFER_SIZE];
+    for (;;) {
+        size_t bytes_read = fread(buffer, sizeof(char), sizeof buffer, file);
+        if (bytes_read == 0) {
+            break;
+        }
+        ssize_t bytes_sent = send(connection, buffer, bytes_read, 0);
+        if (bytes_sent == -1) {
+            return 1;
+        }
+    }
+    return 0;
 }
