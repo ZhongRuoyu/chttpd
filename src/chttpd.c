@@ -141,7 +141,6 @@ int ServeRequest(const Context *context, int connection,
                         Warning("failed to send response: %s\n",
                                 strerror(errno));
                     }
-                    free(uri);
                     return 1;
                 }
                 free(path);
