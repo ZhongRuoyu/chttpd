@@ -33,7 +33,7 @@ static void BuildContext(Context *context, const Args *args) {
     }
 }
 
-static void SigchldHandler(int arg) {
+static void SigchldHandler(int signo, siginfo_t *info, void *ucontext) {
     int saved_errno = errno;
     while (waitpid(-1, NULL, WNOHANG) > 0) {
         continue;
@@ -42,16 +42,12 @@ static void SigchldHandler(int arg) {
 }
 
 static int InstallSignalHandler() {
-    struct sigaction action = {.sa_handler = SigchldHandler,
-                               .sa_flags = SA_RESTART};
+    struct sigaction action = {.sa_sigaction = SigchldHandler,
+                               .sa_flags = SA_RESTART | SA_SIGINFO};
     sigemptyset(&action.sa_mask);
-
-    int error;
-    error = sigaction(SIGCHLD, &action, NULL);
-    if (error != 0) {
+    if (sigaction(SIGCHLD, &action, NULL) != 0) {
         return -1;
     }
-
     return 0;
 }
 
