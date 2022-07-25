@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -9,6 +10,34 @@
 #include "chttpd.h"
 
 #define SEND_FILE_BUFFER_SIZE 4096
+
+int PathIsSafe(const char *path, const char *root) {
+    char *path_absolute_path = realpath(path, NULL);
+    if (path_absolute_path == NULL) {
+        return -1;
+    }
+    char *root_absolute_path = realpath(root, NULL);
+    if (root_absolute_path == NULL) {
+        free(path_absolute_path);
+        return -1;
+    }
+    size_t root_absolute_path_length = strlen(root_absolute_path);
+    if (strncmp(path_absolute_path, root_absolute_path,
+                root_absolute_path_length) != 0) {
+        free(path_absolute_path);
+        free(root_absolute_path);
+        return 1;
+    }
+    if (path_absolute_path[root_absolute_path_length] != '\0' &&
+        path_absolute_path[root_absolute_path_length] != '/') {
+        free(path_absolute_path);
+        free(root_absolute_path);
+        return 1;
+    }
+    free(path_absolute_path);
+    free(root_absolute_path);
+    return 0;
+}
 
 const char *GetContentType(const char *file_extension) {
     if (file_extension == NULL) {
