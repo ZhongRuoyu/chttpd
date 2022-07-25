@@ -7,8 +7,10 @@
 typedef struct {
     bool help;
     bool version;
+    bool daemon;
     const char *host;
     const char *index;
+    const char *log;
     const char *port;
     const char *root;
     const char *server;

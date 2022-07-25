@@ -1,20 +1,26 @@
 #ifndef CHTTPD_LOG_H_
 #define CHTTPD_LOG_H_
 
+#include "chttpd.h"
 #include "socket.h"
 
 #ifndef __GNUC__
 #define __attribute__(x)
 #endif
 
-void Info(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void Info(const Context *context, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
 
-void Warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void Warning(const Context *context, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
 
-void Error(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void Error(const Context *context, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
 
-void Fatal(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void Fatal(const Context *context, const char *format, ...)
+    __attribute__((format(printf, 2, 3)));
 
-void LogRequestLine(const SocketAddress *from_addr, const char *request_line);
+void LogRequestLine(const Context *context, const SocketAddress *from_addr,
+                    const char *request_line);
 
 #endif  // CHTTPD_LOG_H_

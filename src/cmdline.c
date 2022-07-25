@@ -20,8 +20,10 @@ void Usage(FILE *out) {
         "Options:\n"
         "  --help                    Report usage information\n"
         "  -v, --version             Report version information\n"
+        "  -d, --daemon              Run as daemon\n"
         "  -h HOST, --host HOST      Serve only requests to HOST\n"
         "  -i INDEX, --index INDEX   Set index file (default: index.html)\n"
+        "  -l FILE, --log FILE       Set log output path\n"
         "  -p PORT, --port PORT      Set port number to listen to\n"
         "                              (default: 80)\n"
         "  -r ROOT, --root ROOT      Set root directory to serve (default: .)\n"
@@ -89,7 +91,7 @@ static int ReadArgWithoutDash(int argc, char **argv, int i, size_t offset,
         return 0;
     }
     if (i + 1 >= argc) {
-        Fatal("option %s: argument missing", argv[i]);
+        Fatal(NULL, "option %s: argument missing", argv[i]);
     }
     *value = argv[i + 1];
     return 2;
@@ -130,11 +132,18 @@ void ParseArgs(int argc, char **argv, Args *args) {
                    (arg_adv = ReadFlag(argc, argv, i, "version"))) {
             args->version = true;
             i += arg_adv;
+        } else if ((arg_adv = ReadFlag(argc, argv, i, "d")) ||
+                   (arg_adv = ReadFlag(argc, argv, i, "daemon"))) {
+            args->daemon = true;
+            i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "h", &args->host)) ||
                    (arg_adv = ReadArg(argc, argv, i, "host", &args->host))) {
             i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "i", &args->index)) ||
                    (arg_adv = ReadArg(argc, argv, i, "index", &args->index))) {
+            i += arg_adv;
+        } else if ((arg_adv = ReadArg(argc, argv, i, "l", &args->log)) ||
+                   (arg_adv = ReadArg(argc, argv, i, "log", &args->log))) {
             i += arg_adv;
         } else if ((arg_adv = ReadArg(argc, argv, i, "p", &args->port)) ||
                    (arg_adv = ReadArg(argc, argv, i, "port", &args->port))) {
@@ -146,7 +155,7 @@ void ParseArgs(int argc, char **argv, Args *args) {
                         ReadArg(argc, argv, i, "server", &args->server))) {
             i += arg_adv;
         } else {
-            Fatal("unknown command line option: %s", argv[i]);
+            Fatal(NULL, "unknown command line option: %s", argv[i]);
         }
     }
 }

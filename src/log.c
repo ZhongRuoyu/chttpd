@@ -7,6 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "chttpd.h"
 #include "socket.h"
 
 #define LOG_TIME_BUFFER_SIZE 20
@@ -42,7 +43,16 @@ static void ColorOutput(FILE *file, Color color, const char *msg) {
     }
 }
 
-void Info(const char *format, ...) {
+void Info(const Context *context, const char *format, ...) {
+    if (context != NULL && context->log != NULL) {
+        fprintf(context->log, "chttpd: ");
+        ColorOutput(context->log, kGreen, "info: ");
+        va_list args;
+        va_start(args, format);
+        vfprintf(context->log, format, args);
+        va_end(args);
+        fprintf(context->log, "\n");
+    }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kGreen, "info: ");
     va_list args;
@@ -52,7 +62,16 @@ void Info(const char *format, ...) {
     fprintf(stderr, "\n");
 }
 
-void Warning(const char *format, ...) {
+void Warning(const Context *context, const char *format, ...) {
+    if (context != NULL && context->log != NULL) {
+        fprintf(context->log, "chttpd: ");
+        ColorOutput(context->log, kYellow, "warning: ");
+        va_list args;
+        va_start(args, format);
+        vfprintf(context->log, format, args);
+        va_end(args);
+        fprintf(context->log, "\n");
+    }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kYellow, "warning: ");
     va_list args;
@@ -62,7 +81,16 @@ void Warning(const char *format, ...) {
     fprintf(stderr, "\n");
 }
 
-void Error(const char *format, ...) {
+void Error(const Context *context, const char *format, ...) {
+    if (context != NULL && context->log != NULL) {
+        fprintf(context->log, "chttpd: ");
+        ColorOutput(context->log, kRed, "error: ");
+        va_list args;
+        va_start(args, format);
+        vfprintf(context->log, format, args);
+        va_end(args);
+        fprintf(context->log, "\n");
+    }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kRed, "error: ");
     va_list args;
@@ -72,7 +100,16 @@ void Error(const char *format, ...) {
     fprintf(stderr, "\n");
 }
 
-void Fatal(const char *format, ...) {
+void Fatal(const Context *context, const char *format, ...) {
+    if (context != NULL && context->log != NULL) {
+        fprintf(context->log, "chttpd: ");
+        ColorOutput(context->log, kRed, "fatal: ");
+        va_list args;
+        va_start(args, format);
+        vfprintf(context->log, format, args);
+        va_end(args);
+        fprintf(context->log, "\n");
+    }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kRed, "fatal: ");
     va_list args;
@@ -90,9 +127,10 @@ static size_t GetLogTime(char *buffer, size_t buffer_size) {
     return n;
 }
 
-void LogRequestLine(const SocketAddress *from_addr, const char *request_line) {
+void LogRequestLine(const Context *context, const SocketAddress *from_addr,
+                    const char *request_line) {
     char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
-    printf("[%s [%s]:%d] %s\n", log_time, from_addr->ip, from_addr->port,
-           request_line);
+    Info(context, "[%s [%s]:%d] %s", log_time, from_addr->ip, from_addr->port,
+         request_line);
 }
