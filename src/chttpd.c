@@ -134,14 +134,23 @@ int ServeRequest(const Context *context, int connection,
             {
                 int path_is_safe_result = PathIsSafe(path, context->root);
                 if (path_is_safe_result == -1) {
-                    Warning("failed to process request path: %s",
-                            strerror(errno));
-                    if (ErrorResponse(context, connection,
-                                      kInternalServerError) != 0) {
-                        Warning("failed to send response: %s\n",
+                    if (errno == ENOENT) {
+                        if (ErrorResponse(context, connection, kNotFound) !=
+                            0) {
+                            Warning("failed to send response: %s\n",
+                                    strerror(errno));
+                        }
+                        free(path);
+                    } else {
+                        Warning("failed to process request path: %s",
                                 strerror(errno));
+                        if (ErrorResponse(context, connection,
+                                          kInternalServerError) != 0) {
+                            Warning("failed to send response: %s\n",
+                                    strerror(errno));
+                        }
+                        free(path);
                     }
-                    free(path);
                     return 1;
                 } else if (path_is_safe_result != 0) {
                     if (ErrorResponse(context, connection, kBadRequest) != 0) {
