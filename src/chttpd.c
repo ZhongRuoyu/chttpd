@@ -121,16 +121,15 @@ int ServeRequest(const Context *context, int connection,
                 ++query_string;
             }
             char *path = Format("%s%s", context->root, uri);
+            free(uri);
             if (path == NULL) {
                 Warning("failed to process request path: %s", strerror(errno));
                 if (ErrorResponse(context, connection, kInternalServerError) !=
                     0) {
                     Warning("failed to send response: %s\n", strerror(errno));
                 }
-                free(uri);
                 return 1;
             }
-            free(uri);
             if (path[strlen(path) - 1] == '/') {
                 char *concatenated = Format("%s%s", path, context->index);
                 if (concatenated == NULL) {
