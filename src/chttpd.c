@@ -128,6 +128,7 @@ int ServeRequest(const Context *context, int connection,
                     0) {
                     Warning("failed to send response: %s\n", strerror(errno));
                 }
+                free(path);
                 return 1;
             }
             {
@@ -140,17 +141,20 @@ int ServeRequest(const Context *context, int connection,
                         Warning("failed to send response: %s\n",
                                 strerror(errno));
                     }
+                    free(path);
                     return 1;
                 } else if (path_is_safe_result != 0) {
                     if (ErrorResponse(context, connection, kBadRequest) != 0) {
                         Warning("failed to send response: %s\n",
                                 strerror(errno));
                     }
+                    free(path);
                     return 1;
                 }
             }
             if (path[strlen(path) - 1] == '/') {
                 char *concatenated = Format("%s%s", path, context->index);
+                free(path);
                 if (concatenated == NULL) {
                     Warning("failed to process request path: %s",
                             strerror(errno));
@@ -161,7 +165,6 @@ int ServeRequest(const Context *context, int connection,
                     }
                     return 1;
                 }
-                free(path);
                 path = concatenated;
             }
             int serve_result = ServeFile(context, connection, path);
