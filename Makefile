@@ -25,27 +25,14 @@ all: chttpd
 -include $(DEPS)
 
 .PHONY: test
+.NOTPARALLEL: test
 test: all
-	@set -e; \
-		test -t 1 && red="\033[31m" || red=""; \
-		test -t 1 && green="\033[32m" || green=""; \
-		test -t 1 && yellow="\033[33m" || yellow=""; \
-		test -t 1 && reset="\033[0m" || reset=""; \
-		for test in $$(printf "%s\n" $(TESTS)); do \
-			echo "[ $${yellow}TESTING$${reset} ] $$test"; \
-			( \
-				$$test && \
-				echo "[ $${green}PASSED$${reset}  ] $$test" \
-			) || ( \
-				echo "[ $${red}FAILED$${reset}  ] $$test" && \
-				exit 1 \
-			); \
-		done
+	@$(MAKE) $(TESTS) --no-print-directory
 	@echo "All tests passed."
 
 .PHONY: test-asan
 test-asan:
-	$(MAKE) CFLAGS="-O0 -g -fsanitize=address -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" test
+	@$(MAKE) CFLAGS="-O0 -g -fsanitize=address -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" test
 
 
 chttpd: $(OBJS)
@@ -58,6 +45,23 @@ chttpd-asan: $(OBJS)
 out/%.o: src/%.c
 	mkdir -p $(@D)
 	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
+
+
+.PHONY: $(TESTS)
+$(TESTS):
+	@set -e; \
+		test -t 1 && red="\033[31m" || red=""; \
+		test -t 1 && green="\033[32m" || green=""; \
+		test -t 1 && yellow="\033[33m" || yellow=""; \
+		test -t 1 && reset="\033[0m" || reset=""; \
+		echo "[ $${yellow}TESTING$${reset} ] $@"; \
+		( \
+			./$@ && \
+			echo "[ $${green}PASSED$${reset}  ] $@" \
+		) || ( \
+			echo "[ $${red}FAILED$${reset}  ] $@" && \
+			exit 1 \
+		)
 
 
 .PHONY: clean
