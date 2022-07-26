@@ -43,9 +43,18 @@ static void ColorOutput(FILE *file, Color color, const char *msg) {
     }
 }
 
+static size_t GetLogTime(char *buffer, size_t buffer_size) {
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    size_t n = strftime(buffer, buffer_size, "%F %T", tm);
+    return n;
+}
+
 void Info(const Context *context, const char *format, ...) {
+    char log_time[LOG_TIME_BUFFER_SIZE];
+    GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
-        fprintf(context->log, "chttpd: ");
+        fprintf(context->log, "[%s] chttpd: ", log_time);
         ColorOutput(context->log, kGreen, "info: ");
         va_list args;
         va_start(args, format);
@@ -54,7 +63,7 @@ void Info(const Context *context, const char *format, ...) {
         fprintf(context->log, "\n");
         fflush(context->log);
     }
-    fprintf(stderr, "chttpd: ");
+    fprintf(stderr, "[%s] chttpd: ", log_time);
     ColorOutput(stderr, kGreen, "info: ");
     va_list args;
     va_start(args, format);
@@ -65,7 +74,10 @@ void Info(const Context *context, const char *format, ...) {
 }
 
 void Warning(const Context *context, const char *format, ...) {
+    char log_time[LOG_TIME_BUFFER_SIZE];
+    GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
+        fprintf(context->log, "[%s] chttpd: ", log_time);
         fprintf(context->log, "chttpd: ");
         ColorOutput(context->log, kYellow, "warning: ");
         va_list args;
@@ -75,7 +87,7 @@ void Warning(const Context *context, const char *format, ...) {
         fprintf(context->log, "\n");
         fflush(context->log);
     }
-    fprintf(stderr, "chttpd: ");
+    fprintf(stderr, "[%s] chttpd: ", log_time);
     ColorOutput(stderr, kYellow, "warning: ");
     va_list args;
     va_start(args, format);
@@ -86,8 +98,10 @@ void Warning(const Context *context, const char *format, ...) {
 }
 
 void Error(const Context *context, const char *format, ...) {
+    char log_time[LOG_TIME_BUFFER_SIZE];
+    GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
-        fprintf(context->log, "chttpd: ");
+        fprintf(context->log, "[%s] chttpd: ", log_time);
         ColorOutput(context->log, kRed, "error: ");
         va_list args;
         va_start(args, format);
@@ -96,7 +110,7 @@ void Error(const Context *context, const char *format, ...) {
         fprintf(context->log, "\n");
         fflush(context->log);
     }
-    fprintf(stderr, "chttpd: ");
+    fprintf(stderr, "[%s] chttpd: ", log_time);
     ColorOutput(stderr, kRed, "error: ");
     va_list args;
     va_start(args, format);
@@ -107,8 +121,10 @@ void Error(const Context *context, const char *format, ...) {
 }
 
 void Fatal(const Context *context, const char *format, ...) {
+    char log_time[LOG_TIME_BUFFER_SIZE];
+    GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
-        fprintf(context->log, "chttpd: ");
+        fprintf(context->log, "[%s] chttpd: ", log_time);
         ColorOutput(context->log, kRed, "fatal: ");
         va_list args;
         va_start(args, format);
@@ -117,7 +133,7 @@ void Fatal(const Context *context, const char *format, ...) {
         fprintf(context->log, "\n");
         fflush(context->log);
     }
-    fprintf(stderr, "chttpd: ");
+    fprintf(stderr, "[%s] chttpd: ", log_time);
     ColorOutput(stderr, kRed, "fatal: ");
     va_list args;
     va_start(args, format);
@@ -128,17 +144,7 @@ void Fatal(const Context *context, const char *format, ...) {
     exit(EXIT_FAILURE);
 }
 
-static size_t GetLogTime(char *buffer, size_t buffer_size) {
-    time_t t = time(NULL);
-    struct tm *tm = localtime(&t);
-    size_t n = strftime(buffer, buffer_size, "%F %T", tm);
-    return n;
-}
-
 void LogRequestLine(const Context *context, const SocketAddress *from_addr,
                     const char *request_line) {
-    char log_time[LOG_TIME_BUFFER_SIZE];
-    GetLogTime(log_time, sizeof log_time);
-    Info(context, "[%s [%s]:%d] %s", log_time, from_addr->ip, from_addr->port,
-         request_line);
+    Info(context, "[%s]:%d %s", from_addr->ip, from_addr->port, request_line);
 }
