@@ -11,26 +11,54 @@ CHTTPD_CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -DCHTTPD_VERSION=\"$(VERSION)\"
 CHTTPD_LDFLAGS =
 CHTTPD_DEPFLAGS = -MT $@ -MMD -MP -MF out/$*.d
 
+TESTS = $(shell find test -name '*.sh' | sort)
+
 GIT_HASH := $(shell test -f .git/HEAD && if grep -q '^ref:' .git/HEAD; then cat .git/`sed 's/^ref: //' .git/HEAD`; else cat .git/HEAD; fi)
 ifneq ($(GIT_HASH),)
 	CHTTPD_CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 endif
+
 
 .PHONY: all
 all: chttpd
 
 -include $(DEPS)
 
+.PHONY: test
+test: all
+	@set -e; \
+		test -t 1 && red="\033[31m" || red=""; \
+		test -t 1 && green="\033[32m" || green=""; \
+		test -t 1 && yellow="\033[33m" || yellow=""; \
+		test -t 1 && reset="\033[0m" || reset=""; \
+		for test in $$(printf "%s\n" $(TESTS)); do \
+			echo "[ $${yellow}TESTING$${reset} ] $$test"; \
+			( \
+				$$test && \
+				echo "[ $${green}PASSED$${reset}  ] $$test" \
+			) || ( \
+				echo "[ $${red}FAILED$${reset}  ] $$test" && \
+				exit 1 \
+			); \
+		done
+	@echo "All tests passed."
+
+.PHONY: test-asan
+test-asan:
+	$(MAKE) CFLAGS="-O0 -g -fsanitize=address -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" test
+
+
 chttpd: $(OBJS)
 	mkdir -p $(@D)
 	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS)
 
 chttpd-asan: $(OBJS)
-	$(MAKE) CFLAGS="-fsanitize=address -O0 -g -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" chttpd
+	$(MAKE) CFLAGS="-O0 -g -fsanitize=address -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" chttpd
 
 out/%.o: src/%.c
 	mkdir -p $(@D)
 	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
+
 
 .PHONY: clean
 clean:
