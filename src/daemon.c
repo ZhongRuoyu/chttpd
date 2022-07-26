@@ -74,7 +74,7 @@ static int ForkAndExit() {
     return 0;
 }
 
-int Daemon(const Context *context) {
+int Daemon(Context *context) {
     if (ForkAndExit() != 0) {
         return -1;
     }
@@ -102,6 +102,8 @@ int Daemon(const Context *context) {
         if (dup2(fileno(context->log), STDERR_FILENO) == -1) {
             return -1;
         }
+        fclose(context->log);
+        context->log = NULL;
     } else {
         if (dup2(dev_null_fd, STDERR_FILENO) == -1) {
             return -1;

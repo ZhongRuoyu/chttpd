@@ -5,6 +5,6 @@
 
 int InstallSignalHandlers();
 
-int Daemon(const Context *context);
+int Daemon(Context *context);
 
 #endif  // CHTTPD_DAEMON_H_
