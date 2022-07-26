@@ -52,6 +52,7 @@ void Info(const Context *context, const char *format, ...) {
         vfprintf(context->log, format, args);
         va_end(args);
         fprintf(context->log, "\n");
+        fflush(context->log);
     }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kGreen, "info: ");
@@ -60,6 +61,7 @@ void Info(const Context *context, const char *format, ...) {
     vfprintf(stderr, format, args);
     va_end(args);
     fprintf(stderr, "\n");
+    fflush(stderr);
 }
 
 void Warning(const Context *context, const char *format, ...) {
@@ -71,6 +73,7 @@ void Warning(const Context *context, const char *format, ...) {
         vfprintf(context->log, format, args);
         va_end(args);
         fprintf(context->log, "\n");
+        fflush(context->log);
     }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kYellow, "warning: ");
@@ -79,6 +82,7 @@ void Warning(const Context *context, const char *format, ...) {
     vfprintf(stderr, format, args);
     va_end(args);
     fprintf(stderr, "\n");
+    fflush(stderr);
 }
 
 void Error(const Context *context, const char *format, ...) {
@@ -90,6 +94,7 @@ void Error(const Context *context, const char *format, ...) {
         vfprintf(context->log, format, args);
         va_end(args);
         fprintf(context->log, "\n");
+        fflush(context->log);
     }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kRed, "error: ");
@@ -98,6 +103,7 @@ void Error(const Context *context, const char *format, ...) {
     vfprintf(stderr, format, args);
     va_end(args);
     fprintf(stderr, "\n");
+    fflush(stderr);
 }
 
 void Fatal(const Context *context, const char *format, ...) {
@@ -109,6 +115,7 @@ void Fatal(const Context *context, const char *format, ...) {
         vfprintf(context->log, format, args);
         va_end(args);
         fprintf(context->log, "\n");
+        fflush(context->log);
     }
     fprintf(stderr, "chttpd: ");
     ColorOutput(stderr, kRed, "fatal: ");
@@ -117,6 +124,7 @@ void Fatal(const Context *context, const char *format, ...) {
     vfprintf(stderr, format, args);
     va_end(args);
     fprintf(stderr, "\n");
+    fflush(stderr);
     exit(EXIT_FAILURE);
 }
 
