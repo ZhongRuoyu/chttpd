@@ -41,7 +41,7 @@ static void BuildContext(Context *context, const Args *args) {
     }
 }
 
-static int Initialize(const Context *context) {
+static int Initialize(Context *context) {
     struct addrinfo hints = {.ai_flags = AI_PASSIVE,
                              .ai_family = AF_UNSPEC,
                              .ai_socktype = SOCK_STREAM};
@@ -91,12 +91,10 @@ static int Initialize(const Context *context) {
         if (Daemon(context) != 0) {
             if (context->log != NULL) {
                 fclose(context->log);
+                context->log = NULL;
             }
             close(s);
             Fatal(context, "failed to initialize daemon: %s", strerror(errno));
-        }
-        if (context->log != NULL) {
-            fclose(context->log);
         }
     } else {
         if (InstallSignalHandlers() != 0) {
@@ -172,9 +170,6 @@ int main(int argc, char **argv) {
             close(socket);
             ServeRequest(&context, connection, &from_addr);
             close(connection);
-            if (context.log != NULL) {
-                fclose(context.log);
-            }
             exit(EXIT_SUCCESS);
         } else {
             close(connection);
@@ -184,6 +179,7 @@ int main(int argc, char **argv) {
     close(socket);
     if (context.log != NULL) {
         fclose(context.log);
+        context.log = NULL;
     }
     exit(EXIT_SUCCESS);
 }
