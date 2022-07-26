@@ -11,7 +11,8 @@ jobs:
       matrix:
         target:
           - chttpd
-          - chttpd-asan
+          - test
+          - test-asan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,7 +20,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang
+          sudo apt-get install -y build-essential clang python3
       - name: Build
         run: make -j$(nproc) CC=clang ${{ matrix.target }}
   build-gcc:
@@ -27,7 +28,8 @@ jobs:
       matrix:
         target:
           - chttpd
-          - chttpd-asan
+          - test
+          - test-asan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,7 +37,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential
+          sudo apt-get install -y build-essential python3
       - name: Build
         run: make -j$(nproc) CC=gcc ${{ matrix.target }}
   build-macos:
@@ -43,7 +45,8 @@ jobs:
       matrix:
         target:
           - chttpd
-          - chttpd-asan
+          - test
+          - test-asan
     runs-on: macos-latest
     steps:
       - name: Checkout
