@@ -34,7 +34,7 @@ int ServeRequest(const Context *context, int connection,
     if (request_line == NULL) {
         Warning(context, "failed to process request line: %s", strerror(errno));
         if (ErrorResponse(context, connection, kInternalServerError) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
@@ -57,7 +57,7 @@ int ServeRequest(const Context *context, int connection,
         default:
             if (ErrorResponse(context, connection, kHTTPVersionNotSupported) !=
                 0) {
-                Warning(context, "failed to send response: %s\n",
+                Warning(context, "failed to send response: %s",
                         strerror(errno));
             }
             free(uri);
@@ -73,7 +73,7 @@ int ServeRequest(const Context *context, int connection,
             Warning(context, "failed to process field lines: %s",
                     strerror(errno));
             if (ErrorResponse(context, connection, kInternalServerError) != 0) {
-                Warning(context, "failed to send response: %s\n",
+                Warning(context, "failed to send response: %s",
                         strerror(errno));
             }
             free(uri);
@@ -130,7 +130,7 @@ int ServeRequest(const Context *context, int connection,
                         strerror(errno));
                 if (ErrorResponse(context, connection, kInternalServerError) !=
                     0) {
-                    Warning(context, "failed to send response: %s\n",
+                    Warning(context, "failed to send response: %s",
                             strerror(errno));
                 }
                 free(path);
@@ -142,7 +142,7 @@ int ServeRequest(const Context *context, int connection,
                     if (errno == ENOENT) {
                         if (ErrorResponse(context, connection, kNotFound) !=
                             0) {
-                            Warning(context, "failed to send response: %s\n",
+                            Warning(context, "failed to send response: %s",
                                     strerror(errno));
                         }
                         free(path);
@@ -151,7 +151,7 @@ int ServeRequest(const Context *context, int connection,
                                 strerror(errno));
                         if (ErrorResponse(context, connection,
                                           kInternalServerError) != 0) {
-                            Warning(context, "failed to send response: %s\n",
+                            Warning(context, "failed to send response: %s",
                                     strerror(errno));
                         }
                         free(path);
@@ -159,7 +159,7 @@ int ServeRequest(const Context *context, int connection,
                     return 1;
                 } else if (path_is_safe_result != 0) {
                     if (ErrorResponse(context, connection, kBadRequest) != 0) {
-                        Warning(context, "failed to send response: %s\n",
+                        Warning(context, "failed to send response: %s",
                                 strerror(errno));
                     }
                     free(path);
@@ -174,7 +174,7 @@ int ServeRequest(const Context *context, int connection,
                             strerror(errno));
                     if (ErrorResponse(context, connection,
                                       kInternalServerError) != 0) {
-                        Warning(context, "failed to send response: %s\n",
+                        Warning(context, "failed to send response: %s",
                                 strerror(errno));
                     }
                     return 1;
@@ -187,7 +187,7 @@ int ServeRequest(const Context *context, int connection,
         }
         default: {
             if (ErrorResponse(context, connection, kBadRequest) != 0) {
-                Warning(context, "failed to send response: %s\n",
+                Warning(context, "failed to send response: %s",
                         strerror(errno));
             }
             free(uri);
@@ -206,13 +206,13 @@ static int ProcessRequestLine(const Context *context, int connection,
         Warning(context, "failed to process request method: %s",
                 strerror(errno));
         if (ErrorResponse(context, connection, kInternalServerError) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
     if (request_method_string_length == 0) {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
@@ -220,14 +220,14 @@ static int ProcessRequestLine(const Context *context, int connection,
     free(request_method_string);
     if (*request_method == 0) {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
 
     if (!isspace(request_line[request_method_string_length])) {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
@@ -238,13 +238,13 @@ static int ProcessRequestLine(const Context *context, int connection,
     if (uri == NULL) {
         Warning(context, "failed to process URI: %s", strerror(errno));
         if (ErrorResponse(context, connection, kInternalServerError) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
     if (uri_length == 0) {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         free(*uri);
         return 1;
@@ -252,7 +252,7 @@ static int ProcessRequestLine(const Context *context, int connection,
 
     if (!isspace(request_line[request_method_string_length + 1 + uri_length])) {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         free(*uri);
         return 1;
@@ -265,14 +265,14 @@ static int ProcessRequestLine(const Context *context, int connection,
     if (uri == NULL) {
         Warning(context, "failed to process HTTP version: %s", strerror(errno));
         if (ErrorResponse(context, connection, kInternalServerError) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         free(*uri);
         return 1;
     }
     if (http_version_string_length == 0) {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         free(*uri);
         return 1;
@@ -282,7 +282,7 @@ static int ProcessRequestLine(const Context *context, int connection,
     if (*http_version == 0) {
         Warning(context, "failed to process URI: %s", strerror(errno));
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         free(*uri);
         return 1;
@@ -291,7 +291,7 @@ static int ProcessRequestLine(const Context *context, int connection,
     if (request_line[request_method_string_length + 1 + uri_length + 1 +
                      http_version_string_length] != '\0') {
         if (ErrorResponse(context, connection, kBadRequest) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         free(*uri);
         return 1;
@@ -320,12 +320,12 @@ static int ServeFile(const Context *context, int connection, const char *path) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
         if (ErrorResponse(context, connection, kNotFound) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
         }
         return 1;
     }
     if (SuccessResponseCommonHeader(context, connection, kOK) != 0) {
-        Warning(context, "failed to send response: %s\n", strerror(errno));
+        Warning(context, "failed to send response: %s", strerror(errno));
         return 1;
     }
 
@@ -334,7 +334,7 @@ static int ServeFile(const Context *context, int connection, const char *path) {
     rewind(file);
     if (SendToConnection(connection, "Content-Length: %ld\r\n", file_size) !=
         0) {
-        Warning(context, "failed to send response: %s\n", strerror(errno));
+        Warning(context, "failed to send response: %s", strerror(errno));
         return 1;
     }
 
@@ -343,13 +343,13 @@ static int ServeFile(const Context *context, int connection, const char *path) {
     if (content_type != NULL) {
         if (SendToConnection(connection, "Content-Type: %s\r\n",
                              content_type) != 0) {
-            Warning(context, "failed to send response: %s\n", strerror(errno));
+            Warning(context, "failed to send response: %s", strerror(errno));
             return 1;
         }
     }
 
     if (SendToConnection(connection, "\r\n") != 0) {
-        Warning(context, "failed to send response: %s\n", strerror(errno));
+        Warning(context, "failed to send response: %s", strerror(errno));
         return 1;
     }
 
