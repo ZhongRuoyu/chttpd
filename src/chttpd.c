@@ -101,8 +101,8 @@ int ServeRequest(const Context *context, int connection,
         }
         if (http_version == kHTTP_1_1 && context->host != NULL) {
             if (strcmp(host_line_host, context->host) != 0 ||
-                host_line_port != NULL &&
-                    strcmp(host_line_port, context->port) != 0) {
+                (host_line_port != NULL &&
+                 strcmp(host_line_port, context->port) != 0)) {
                 free(uri);
                 free(host_line_host);
                 return 1;
