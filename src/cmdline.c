@@ -7,11 +7,7 @@
 
 #include "log.h"
 
-#ifdef GIT_HASH
-static const char kVersion[] = "chttpd " CHTTPD_VERSION " (" GIT_HASH ")";
-#else
-static const char kVersion[] = "chttpd " CHTTPD_VERSION;
-#endif
+extern const char *GetVersion();
 
 void Usage(FILE *out) {
     fprintf(
@@ -36,7 +32,7 @@ void Version(FILE *out) {
     fprintf(out,
             "%s\n"
             "",
-            kVersion);
+            GetVersion());
 }
 
 static int ReadFlagWithoutDash(int argc, char **argv, int i, size_t offset,
