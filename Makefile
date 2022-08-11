@@ -20,6 +20,14 @@ all: chttpd
 -include $(DEPS)
 
 
+chttpd: $(OBJS)
+	mkdir -p $(@D)
+	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS)
+
+out/%.o: src/%.c
+	mkdir -p $(@D)
+	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
+
 FORCE:
 out/version.c: FORCE
 	scripts/update-version.sh . $@
@@ -38,19 +46,6 @@ test: all
 .PHONY: test-asan
 test-asan:
 	@$(MAKE) CFLAGS="-O0 -g -fsanitize=address -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" test
-
-
-chttpd: $(OBJS)
-	mkdir -p $(@D)
-	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS)
-
-chttpd-asan: $(OBJS)
-	$(MAKE) CFLAGS="-O0 -g -fsanitize=address -fno-omit-frame-pointer" LDFLAGS="-fsanitize=address" chttpd
-
-out/%.o: src/%.c
-	mkdir -p $(@D)
-	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
-
 
 .PHONY: $(TESTS)
 $(TESTS):
