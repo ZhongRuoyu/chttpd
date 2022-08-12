@@ -56,7 +56,7 @@ static int Initialize(Context *context) {
         }
     }
 
-    int s;
+    int s = -1;
     struct addrinfo *addr_info;
     for (addr_info = addr_info_head; addr_info != NULL;
          addr_info = addr_info->ai_next) {
