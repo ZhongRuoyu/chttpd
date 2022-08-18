@@ -13,7 +13,7 @@ get_git_hash() {
     repo="$1"
     if [ -f "$repo/.git/HEAD" ]; then
         if grep -q '^ref: ' "$repo/.git/HEAD"; then
-            cat ".git/$(sed 's/^ref: //' "$repo/.git/HEAD")"
+            cat "$repo/.git/$(sed 's/^ref: //' "$repo/.git/HEAD")"
         else
             cat "$repo/.git/HEAD"
         fi
