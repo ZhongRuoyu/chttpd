@@ -3,6 +3,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stddef.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 static const void *GetInAddr(const struct sockaddr *addr) {
     if (addr->sa_family == AF_INET) {

@@ -30,7 +30,7 @@ out/%.o: src/%.c
 
 FORCE:
 out/version.c: FORCE
-	scripts/update-version.sh . $@
+	bash scripts/update-version.sh . $@
 
 out/version.o: out/version.c
 	mkdir -p $(@D)
@@ -56,7 +56,7 @@ $(TESTS):
 		test -t 1 && reset="\033[0m" || reset=""; \
 		echo "[ $${yellow}TESTING$${reset} ] $@"; \
 		( \
-			./$@ && \
+			bash $@ && \
 			echo "[ $${green}PASSED$${reset}  ] $@" \
 		) || ( \
 			echo "[ $${red}FAILED$${reset}  ] $@" && \
