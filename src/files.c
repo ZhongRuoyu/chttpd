@@ -55,7 +55,7 @@ const char *GetContentType(const char *file_extension) {
 }
 
 int SendFile(int connection, FILE *file) {
-    char buffer[SEND_FILE_BUFFER_SIZE];
+    static _Thread_local char buffer[SEND_FILE_BUFFER_SIZE];
     for (;;) {
         size_t bytes_read = fread(buffer, sizeof(char), sizeof buffer, file);
         if (bytes_read == 0) {

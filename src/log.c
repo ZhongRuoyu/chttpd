@@ -51,7 +51,7 @@ static size_t GetLogTime(char *buffer, size_t buffer_size) {
 }
 
 void Info(const Context *context, const char *format, ...) {
-    char log_time[LOG_TIME_BUFFER_SIZE];
+    static _Thread_local char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
         fprintf(context->log, "[%s] chttpd: ", log_time);
@@ -74,7 +74,7 @@ void Info(const Context *context, const char *format, ...) {
 }
 
 void Warning(const Context *context, const char *format, ...) {
-    char log_time[LOG_TIME_BUFFER_SIZE];
+    static _Thread_local char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
         fprintf(context->log, "[%s] chttpd: ", log_time);
@@ -98,7 +98,7 @@ void Warning(const Context *context, const char *format, ...) {
 }
 
 void Error(const Context *context, const char *format, ...) {
-    char log_time[LOG_TIME_BUFFER_SIZE];
+    static _Thread_local char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
         fprintf(context->log, "[%s] chttpd: ", log_time);
@@ -121,7 +121,7 @@ void Error(const Context *context, const char *format, ...) {
 }
 
 void Fatal(const Context *context, const char *format, ...) {
-    char log_time[LOG_TIME_BUFFER_SIZE];
+    static _Thread_local char log_time[LOG_TIME_BUFFER_SIZE];
     GetLogTime(log_time, sizeof log_time);
     if (context != NULL && context->log != NULL) {
         fprintf(context->log, "[%s] chttpd: ", log_time);
