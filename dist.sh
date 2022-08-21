@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker run -it --rm -v "$(pwd):/chttpd" alpine sh -c "
+docker run --rm -v "$(pwd):/chttpd" alpine sh -c "
 apk add --no-cache build-base bash &&
 cp -r /chttpd /tmp/chttpd &&
 cd /tmp/chttpd &&
