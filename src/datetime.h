@@ -5,6 +5,6 @@
 
 #define DATE_HEADER_BUFFER_SIZE 36
 
-char *GetDateHeader();
+char *GetDateHeader(void);
 
 #endif  // CHTTPD_DATETIME_H_

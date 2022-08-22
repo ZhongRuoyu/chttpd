@@ -7,7 +7,7 @@
 
 #include "log.h"
 
-extern const char *GetVersion();
+extern const char *GetVersion(void);
 
 void Usage(FILE *out) {
     fprintf(

@@ -3,7 +3,7 @@
 
 #include "chttpd.h"
 
-int InstallSignalHandlers();
+int InstallSignalHandlers(void);
 
 int Daemon(Context *context);
 

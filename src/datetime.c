@@ -10,7 +10,7 @@ static const char *const kWeekdays[] = {"Sun", "Mon", "Tue", "Wed",
 static const char *const kMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-char *GetDateHeader() {
+char *GetDateHeader(void) {
     time_t t = time(NULL);
     struct tm *tm = gmtime(&t);
     return Format("Date: %s, %02d %s %04d %02d:%02d:%02d GMT\r\n",

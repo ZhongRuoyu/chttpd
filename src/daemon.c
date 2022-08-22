@@ -44,7 +44,7 @@ static void SignalHandler(int signo, siginfo_t *info, void *ucontext) {
     }
 }
 
-int InstallSignalHandlers() {
+int InstallSignalHandlers(void) {
     struct sigaction action = {.sa_sigaction = SignalHandler,
                                .sa_flags = SA_RESTART | SA_SIGINFO};
     sigemptyset(&action.sa_mask);
@@ -63,7 +63,7 @@ int InstallSignalHandlers() {
     return 0;
 }
 
-static int ForkAndExit() {
+static int ForkAndExit(void) {
     pid_t child_pid = fork();
     if (child_pid == -1) {
         return -1;

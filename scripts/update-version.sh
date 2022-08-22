@@ -71,7 +71,7 @@ if [ -z "$prev_version" \
 // Version: $current_version
 // Git hash: $current_git_hash
 
-const char *GetVersion() {
+const char *GetVersion(void) {
     return "$version_string";
 }
 EOF
