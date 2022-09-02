@@ -170,16 +170,13 @@ int main(int argc, char **argv) {
             close(socket);
             ServeRequest(&context, connection, &from_addr);
             close(connection);
+            if (context.log != NULL) {
+                fclose(context.log);
+                context.log = NULL;
+            }
             exit(EXIT_SUCCESS);
         } else {
             close(connection);
         }
     }
-
-    close(socket);
-    if (context.log != NULL) {
-        fclose(context.log);
-        context.log = NULL;
-    }
-    exit(EXIT_SUCCESS);
 }
