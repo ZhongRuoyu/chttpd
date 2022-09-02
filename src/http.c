@@ -11,10 +11,10 @@ static const char *const kHTTPVersions[] = {
 HTTPVersion GetHTTPVersion(const char *http_version_string) {
     for (int i = 0; i < sizeof kHTTPVersions / sizeof(const char *); ++i) {
         if (strcmp(http_version_string, kHTTPVersions[i]) == 0) {
-            return i;
+            return (HTTPVersion)i;
         }
     }
-    return 0;
+    return (HTTPVersion)0;
 }
 
 const char *GetHTTPVersionString(HTTPVersion http_version) {
@@ -33,10 +33,10 @@ static const char *const kRequestMethods[] = {
 RequestMethod GetRequestMethod(const char *request_method_string) {
     for (int i = 0; i < sizeof kRequestMethods / sizeof(const char *); ++i) {
         if (strcmp(request_method_string, kRequestMethods[i]) == 0) {
-            return i;
+            return (RequestMethod)i;
         }
     }
-    return 0;
+    return (RequestMethod)0;
 }
 
 const char *GetResponseStatusString(ResponseStatusCode response_status_code) {
