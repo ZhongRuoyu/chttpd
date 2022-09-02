@@ -1,10 +1,8 @@
 # chttpd
 
-chttpd is a simple, safe, and efficient HTTP server which can serve static
-contents retrievable with HTTP `GET` requests. Incoming requests can be
-handled concurrently.
-
-Written in C, chttpd conforms to the C11 and POSIX.1-2008 standards.
+chttpd is a lightweight and safe HTTP server which can serve static contents
+retrievable with HTTP `GET` requests. Incoming requests can be handled
+concurrently.
 
 ## How to Build
 
@@ -14,7 +12,7 @@ To build chttpd, run the following. A binary named `chttpd` will be built.
 git clone https://github.com/ZhongRuoyu/chttpd.git
 cd chttpd
 git checkout v0.2.1
-make -j$(nproc)
+make -j "$(nproc)"
 ```
 
 Your C compiler and C standard library need to have support for C11 and
@@ -40,8 +38,7 @@ chttpd -d -p 8080 -r site -l chttpd.log
 
 For more information, run `chttpd --help`.
 
-Since version 0.2.1, chttpd is also available as a Docker image. The following
-command also does the above:
+chttpd is also available as a Docker image:
 
 ```bash
 docker run -d -p 8080:80 -v "$(pwd)/site:/site" zhongruoyu/chttpd -r /site
