@@ -1,4 +1,5 @@
 FROM scratch
+ARG VERSION
 ARG TARGETARCH
-ADD chttpd-0.2.1-$TARGETARCH.tar.gz /
+ADD chttpd-$VERSION-$TARGETARCH.tar.gz /
 ENTRYPOINT [ "/chttpd" ]

@@ -30,6 +30,8 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v3
         with:
+          build-args: |
+            VERSION=${{ env.version }}
           context: .
           platforms: |
             linux/amd64
