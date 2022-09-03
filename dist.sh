@@ -13,12 +13,10 @@ version="$(sed -n 's/^VERSION = \(.*\)$/\1/p' Makefile)"
 
 case "$arch" in
 x86_64 | amd64)
-    image=amd64/alpine
     platform=linux/amd64
     arch=amd64
     ;;
 aarch64 | arm64)
-    image=arm64v8/alpine
     platform=linux/arm64
     arch=arm64
     ;;
@@ -28,7 +26,7 @@ aarch64 | arm64)
     ;;
 esac
 
-docker run --rm -v "$(pwd):/chttpd" --platform "$platform" "$image" sh -c "
+docker run --rm -v "$(pwd):/chttpd" --platform "$platform" alpine sh -c "
 apk add --no-cache build-base bash &&
 cp -r /chttpd /tmp/chttpd &&
 cd /tmp/chttpd &&
