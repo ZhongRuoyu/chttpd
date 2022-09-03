@@ -11,7 +11,7 @@ To build chttpd, run the following. A binary named `chttpd` will be built.
 ```bash
 git clone https://github.com/ZhongRuoyu/chttpd.git
 cd chttpd
-git checkout v0.2.1
+git checkout v0.2.2
 make -j "$(nproc)"
 ```
 
