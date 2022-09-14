@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential clang python3
       - name: Build
-        run: make -j$(nproc) CC=clang ${{ matrix.target }}
+        run: make CC=clang -j "$(nproc)" "${{ matrix.target }}"
   build-gcc:
     strategy:
       matrix:
@@ -39,7 +39,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3
       - name: Build
-        run: make -j$(nproc) CC=gcc ${{ matrix.target }}
+        run: make CC=gcc -j "$(nproc)" "${{ matrix.target }}"
   build-macos:
     strategy:
       matrix:
@@ -52,4 +52,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
-        run: make -j$(sysctl -n hw.logicalcpu) ${{ matrix.target }}
+        run: make -j "$(sysctl -n hw.logicalcpu)" "${{ matrix.target }}"
