@@ -47,9 +47,12 @@ jobs:
           - chttpd
           - test
           - test-asan
+        universal-binary:
+          - UNIVERSAL_BINARY=
+          - UNIVERSAL_BINARY=1
     runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
-        run: make -j "$(sysctl -n hw.logicalcpu)" "${{ matrix.target }}"
+        run: make -j "$(sysctl -n hw.logicalcpu)" "${{ matrix.target }}" "${{ matrix.universal-binary }}"
