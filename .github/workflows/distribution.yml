@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  distribution:
+  linux:
     strategy:
       matrix:
         arch:
@@ -26,11 +26,10 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Distribution
         run: |
-          ./dist.sh "$arch"
-          mv chttpd-*.tar.gz "chttpd-$tag-$arch-linux.tar.gz"
+          dist/dist-linux.sh . "$arch"
+          mv chttpd-*.tar.gz "chttpd-$tag-linux-$arch.tar.gz"
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: chttpd-${{ env.tag }}-${{ env.arch }}-linux
-          path: chttpd-${{ env.tag }}-${{ env.arch }}-linux.tar.gz
-
+          name: chttpd-${{ env.tag }}-linux-${{ env.arch }}
+          path: chttpd-${{ env.tag }}-linux-${{ env.arch }}.tar.gz
