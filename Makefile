@@ -21,7 +21,6 @@ all: chttpd
 
 
 chttpd: $(OBJS)
-	mkdir -p $(@D)
 	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS)
 
 out/%.o: src/%.c
@@ -30,6 +29,7 @@ out/%.o: src/%.c
 
 FORCE:
 out/version.c: FORCE
+	mkdir -p $(@D)
 	bash scripts/update-version.sh . $@
 
 out/version.o: out/version.c
