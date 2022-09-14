@@ -1,6 +1,7 @@
 name: docker
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -9,11 +10,12 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up environment
-        run: |
-          echo "version=$(echo "${{ github.ref_name }}" | sed 's/^v//')" >>$GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up environment
+        run: |
+          version="$(sed -n 's/^VERSION = \(.*\)$/\1/p' Makefile)"
+          echo "version=$version" | tee -a $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
