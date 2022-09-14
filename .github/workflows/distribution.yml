@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  dist:
+  distribution:
     strategy:
       matrix:
         arch:
@@ -27,10 +27,10 @@ jobs:
       - name: Distribution
         run: |
           ./dist.sh "$arch"
-          mv chttpd-*.tar.gz "chttpd-$tag-$arch.tar.gz"
+          mv chttpd-*.tar.gz "chttpd-$tag-$arch-linux.tar.gz"
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: chttpd-${{ env.tag }}-${{ env.arch }}
-          path: chttpd-${{ env.tag }}-${{ env.arch }}.tar.gz
+          name: chttpd-${{ env.tag }}-${{ env.arch }}-linux
+          path: chttpd-${{ env.tag }}-${{ env.arch }}-linux.tar.gz
 

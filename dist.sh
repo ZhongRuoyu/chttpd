@@ -31,5 +31,5 @@ cp -r /chttpd /tmp/chttpd &&
 cd /tmp/chttpd &&
 make clean &&
 make -j \"\$(nproc)\" LDFLAGS='-static -s' &&
-tar czf /chttpd/chttpd-$version-$arch.tar.gz chttpd
+tar czf /chttpd/chttpd-$version-$arch-linux.tar.gz chttpd
 "
