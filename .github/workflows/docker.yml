@@ -12,9 +12,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Set up environment
         run: |
-          echo "version=$(sed -n 's/^VERSION = \(.*\)$/\1/p' Makefile)" | tee -a $GITHUB_ENV
+          echo "version=$(git describe --tags | sed 's/^v//')" | tee -a $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
