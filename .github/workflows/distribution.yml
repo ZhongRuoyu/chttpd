@@ -33,3 +33,22 @@ jobs:
         with:
           name: chttpd-${{ env.tag }}-linux-${{ env.arch }}
           path: chttpd-${{ env.tag }}-linux-${{ env.arch }}.tar.gz
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up environment
+        run: |
+          echo "tag=$(git describe --tags)" | tee -a $GITHUB_ENV
+      - name: Distribution
+        run: |
+          dist/dist-macos.sh .
+          mv chttpd-*.tar.gz "chttpd-$tag-macos-universal.tar.gz"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: chttpd-${{ env.tag }}-macos-universal
+          path: chttpd-${{ env.tag }}-macos-universal.tar.gz
