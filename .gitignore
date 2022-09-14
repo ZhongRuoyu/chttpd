@@ -1,3 +1,5 @@
 /out/
 /chttpd
+/chttpd-x86_64
+/chttpd-arm64
 /chttpd-*.tar.gz
