@@ -40,6 +40,8 @@ out/version.o: out/version.c
 
 else  # UNIVERSAL_BINARY
 
+LIPO = lipo
+
 OBJS_X86_64 = $(SRCS:src/%.c=out/x86_64/%.o) out/x86_64/version.o
 OBJS_ARM64 = $(SRCS:src/%.c=out/arm64/%.o) out/arm64/version.o
 DEPS_X86_64 = $(SRCS:src/%.c=out/x86_64/%.d)
@@ -51,7 +53,7 @@ TARGET_FLAG_ARM64 = -target arm64-apple-macos11
 -include $(DEPS_X86_64) $(DEPS_ARM64)
 
 chttpd: chttpd-x86_64 chttpd-arm64
-	lipo -create -output $@ $^
+	$(LIPO) -create -output $@ $^
 
 chttpd-x86_64: $(OBJS_X86_64)
 	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS) $(TARGET_FLAG_X86_64)
