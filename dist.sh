@@ -13,13 +13,11 @@ fi
 version="$(sed -n 's/^VERSION = \(.*\)$/\1/p' Makefile)"
 
 case "$arch" in
-x86_64 | amd64)
+x86_64)
     platform=linux/amd64
-    arch=amd64
     ;;
 aarch64 | arm64)
     platform=linux/arm64
-    arch=arm64
     ;;
 *)
     echo "Error: unsupported architecture $arch" >&2
