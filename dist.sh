@@ -7,6 +7,7 @@ elif [ "$#" -eq 1 ]; then
 else
     echo "Error: invalid number of arguments" >&2
     echo "Usage: $0 [arch]" >&2
+    exit 1
 fi
 
 version="$(sed -n 's/^VERSION = \(.*\)$/\1/p' Makefile)"
