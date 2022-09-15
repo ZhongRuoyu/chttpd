@@ -5,8 +5,7 @@ WORKDIR /chttpd
 COPY . /chttpd
 RUN <<-"EOF"
     apk add --no-cache build-base bash
-    make clean
-    make -j "$(nproc)" LDFLAGS="-static -s"
+    make -B -j "$(nproc)" LDFLAGS="-static -s"
 EOF
 
 FROM scratch

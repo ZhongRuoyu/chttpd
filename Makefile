@@ -15,6 +15,11 @@ TESTS = $(shell find test -name '*.sh' | sort)
 .PHONY: all
 all: chttpd
 
+FORCE:
+out/version.c: FORCE
+	mkdir -p $(@D)
+	bash scripts/update-version.sh . $@
+
 ifndef UNIVERSAL_BINARY
 
 OBJS = $(SRCS:src/%.c=out/%.o) out/version.o
@@ -28,11 +33,6 @@ chttpd: $(OBJS)
 out/%.o: src/%.c
 	mkdir -p $(@D)
 	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
-
-FORCE:
-out/version.c: FORCE
-	mkdir -p $(@D)
-	bash scripts/update-version.sh . $@
 
 out/version.o: out/version.c
 	mkdir -p $(@D)
@@ -52,13 +52,15 @@ TARGET_FLAG_ARM64 = -target arm64-apple-macos11
 
 -include $(DEPS_X86_64) $(DEPS_ARM64)
 
-chttpd: chttpd-x86_64 chttpd-arm64
+chttpd: out/chttpd-x86_64 out/chttpd-arm64
 	$(LIPO) -create -output $@ $^
 
-chttpd-x86_64: $(OBJS_X86_64)
+out/chttpd-x86_64: $(OBJS_X86_64)
+	mkdir -p $(@D)
 	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS) $(TARGET_FLAG_X86_64)
 
-chttpd-arm64: $(OBJS_ARM64)
+out/chttpd-arm64: $(OBJS_ARM64)
+	mkdir -p $(@D)
 	$(CC) $^ -o $@ $(CHTTPD_LDFLAGS) $(LDFLAGS) $(TARGET_FLAG_ARM64)
 
 out/x86_64/%.o: src/%.c
@@ -68,10 +70,6 @@ out/x86_64/%.o: src/%.c
 out/arm64/%.o: src/%.c
 	mkdir -p $(@D)
 	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $< $(TARGET_FLAG_ARM64)
-
-FORCE:
-out/version.c: FORCE
-	bash scripts/update-version.sh . $@
 
 out/x86_64/version.o: out/version.c
 	mkdir -p $(@D)
@@ -113,4 +111,4 @@ $(TESTS):
 
 .PHONY: clean
 clean:
-	rm -rf out chttpd chttpd-x86_64 chttpd-arm64
+	rm -rf out chttpd
