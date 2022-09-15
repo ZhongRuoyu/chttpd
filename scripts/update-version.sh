@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 get_version() {
     repo="$1"

@@ -10,7 +10,7 @@ arch="$2"
 version="$(sed -n 's/^VERSION = \(.*\)$/\1/p' "$repo/Makefile")"
 
 docker run --rm -v "$repo:/chttpd" --platform "linux/$arch" alpine:latest sh -c "
-apk add --no-cache build-base bash &&
+apk add --no-cache gcc libc-dev make &&
 cp -r /chttpd /tmp/chttpd &&
 cd /tmp/chttpd &&
 make -B -j \"\$(nproc)\" LDFLAGS=\"-static -s\" &&

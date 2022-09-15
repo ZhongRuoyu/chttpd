@@ -17,7 +17,7 @@ all: chttpd
 FORCE:
 out/version.c: FORCE
 	mkdir -p $(@D)
-	bash scripts/update-version.sh . $@
+	scripts/update-version.sh . $@
 
 ifndef UNIVERSAL_BINARY
 
