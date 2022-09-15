@@ -7,7 +7,6 @@ SRCS = $(shell find src -name '*.c' | sort)
 
 CHTTPD_CFLAGS = -std=c11 -D_XOPEN_SOURCE=700
 CHTTPD_LDFLAGS =
-CHTTPD_DEPFLAGS = -MT $@ -MMD -MP -MF out/$*.d
 
 TESTS = $(shell find test -name '*.sh' | sort)
 
@@ -24,6 +23,7 @@ ifndef UNIVERSAL_BINARY
 
 OBJS = $(SRCS:src/%.c=out/%.o) out/version.o
 DEPS = $(SRCS:src/%.c=out/%.d)
+DEPFLAGS = -MT $@ -MMD -MP -MF out/$*.d
 
 -include $(DEPS)
 
@@ -32,7 +32,7 @@ chttpd: $(OBJS)
 
 out/%.o: src/%.c
 	mkdir -p $(@D)
-	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
+	$(CC) $(DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $<
 
 out/version.o: out/version.c
 	mkdir -p $(@D)
@@ -46,6 +46,8 @@ OBJS_X86_64 = $(SRCS:src/%.c=out/x86_64/%.o) out/x86_64/version.o
 OBJS_ARM64 = $(SRCS:src/%.c=out/arm64/%.o) out/arm64/version.o
 DEPS_X86_64 = $(SRCS:src/%.c=out/x86_64/%.d)
 DEPS_ARM64 = $(SRCS:src/%.c=out/arm64/%.d)
+DEPFLAGS_X86_64 = -MT $@ -MMD -MP -MF out/x86_64/$*.d
+DEPFLAGS_ARM64 = -MT $@ -MMD -MP -MF out/arm64/$*.d
 
 TARGET_FLAG_X86_64 = -target x86_64-apple-macos10.15
 TARGET_FLAG_ARM64 = -target arm64-apple-macos11
@@ -65,11 +67,11 @@ out/chttpd-arm64: $(OBJS_ARM64)
 
 out/x86_64/%.o: src/%.c
 	mkdir -p $(@D)
-	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $< $(TARGET_FLAG_X86_64)
+	$(CC) $(DEPFLAGS_X86_64) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $< $(TARGET_FLAG_X86_64)
 
 out/arm64/%.o: src/%.c
 	mkdir -p $(@D)
-	$(CC) $(CHTTPD_DEPFLAGS) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $< $(TARGET_FLAG_ARM64)
+	$(CC) $(DEPFLAGS_ARM64) $(CHTTPD_CFLAGS) $(CFLAGS) -c -o $@ $< $(TARGET_FLAG_ARM64)
 
 out/x86_64/version.o: out/version.c
 	mkdir -p $(@D)
