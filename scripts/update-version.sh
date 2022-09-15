@@ -3,7 +3,7 @@
 get_version() {
     repo="$1"
     if [ -f "$repo/Makefile" ]; then
-        if version="$(grep '^VERSION = ' "$repo/Makefile" | sed 's/.* = //')"; then
+        if version="$(sed -n 's/^VERSION = \(.*\)$/\1/p' "$repo/Makefile")"; then
             echo "$version"
         fi
     fi
@@ -13,7 +13,7 @@ get_git_hash() {
     repo="$1"
     if [ -f "$repo/.git/HEAD" ]; then
         if grep -q '^ref: ' "$repo/.git/HEAD"; then
-            cat "$repo/.git/$(sed 's/^ref: //' "$repo/.git/HEAD")"
+            cat "$repo/.git/$(sed -n 's/^ref: \(.*\)$/\1/p' "$repo/.git/HEAD")"
         else
             cat "$repo/.git/HEAD"
         fi
