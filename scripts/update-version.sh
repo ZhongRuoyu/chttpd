@@ -73,8 +73,7 @@ else
     version_string="chttpd $current_version"
 fi
 
-if [ -z "$prev_version" ] ||
-    [ -z "$prev_git_hash" ] ||
+if [ ! -f "$output_file" ] ||
     [ "$current_version" != "$prev_version" ] ||
     [ "$current_git_hash" != "$prev_git_hash" ]; then
     cat <<EOF | tee "$output_file" >/dev/null
