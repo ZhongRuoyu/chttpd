@@ -17,7 +17,12 @@ get_git_hash() {
     if [ -f "$repo/.git/HEAD" ]; then
         if grep -Eq '^ref: ' "$repo/.git/HEAD"; then
             local head="$(sed -En 's/^ref: (.*)$/\1/p' "$repo/.git/HEAD")"
-            cat "$repo/.git/$head"
+            if [ -f "$repo/.git/$head" ]; then
+                cat "$repo/.git/$head"
+            else
+                local head_ref="$(sed -En "s:^(.*) $head\$:\\1:p" "$repo/.git/packed-refs")"
+                echo "$head_ref"
+            fi
         else
             cat "$repo/.git/HEAD"
         fi
