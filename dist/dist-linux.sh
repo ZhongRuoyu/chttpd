@@ -16,5 +16,6 @@ set -e
 apk add --no-cache gcc libc-dev make
 cp -r /chttpd /tmp/chttpd
 make -C /tmp/chttpd -B -j \"\$(nproc)\" LDFLAGS=\"-static -s\"
+/tmp/chttpd/chttpd -v
 tar -C /tmp/chttpd -czf \"/chttpd/chttpd-$version-linux-$arch.tar.gz\" chttpd
 "

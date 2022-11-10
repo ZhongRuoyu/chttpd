@@ -11,4 +11,5 @@ repo="$1"
 version="$(sed -En 's/^VERSION = (.*)$/\1/p' "$repo/Makefile")"
 
 make -C "$repo" -B -j "$(sysctl -n hw.logicalcpu)" UNIVERSAL_BINARY=1
+"$repo/chttpd" -v
 tar -C "$repo" -czf "chttpd-$version-macos-universal.tar.gz" chttpd
